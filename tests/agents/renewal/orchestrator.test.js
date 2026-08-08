@@ -42,8 +42,8 @@ describe('Research three-source synthesis contract', () => {
       totalTextLength: 30,
       pages: [
         { url: 'https://example.com/', title: 'Home', text: 'home', statusCode: 200 },
-        { url: 'https://example.com/about', title: 'About', text: 'about', statusCode: 200 },
-        { url: 'https://docs.example.com/guide', title: 'Guide', text: 'guide', statusCode: 200 },
+        { url: 'https://review.example.net/about', title: 'Review', text: 'review', statusCode: 200 },
+        { url: 'https://docs.example.org/guide', title: 'Guide', text: 'guide', statusCode: 200 },
       ],
       brokenLinks: [], forms: [], interactiveElements: [],
     });
@@ -54,10 +54,25 @@ describe('Research three-source synthesis contract', () => {
       minimumSources: 3,
       sources: [
         expect.objectContaining({ sourceId: 'research-source-1', url: 'https://example.com/' }),
-        expect.objectContaining({ sourceId: 'research-source-2', url: 'https://example.com/about' }),
-        expect.objectContaining({ sourceId: 'research-source-3', url: 'https://docs.example.com/guide' }),
+        expect.objectContaining({ sourceId: 'research-source-2', url: 'https://review.example.net/about' }),
+        expect.objectContaining({ sourceId: 'research-source-3', url: 'https://docs.example.org/guide' }),
       ],
     });
+  });
+
+  it('deduplicates source domains and content before synthesis', () => {
+    const same = 'identical independently retrieved content '.repeat(8);
+    const synthesis = __internals.buildResearchSynthesis({
+      pages: [
+        { url: 'https://one.example/a', bodyText: same, statusCode: 200 },
+        { url: 'https://one.example/b', bodyText: 'different page same domain '.repeat(8), statusCode: 200 },
+        { url: 'https://two.example/a', bodyText: same, statusCode: 200 },
+        { url: 'https://three.example/a', bodyText: 'unique relevant evidence '.repeat(8), statusCode: 200 },
+      ],
+    }, 3);
+
+    expect(synthesis).toMatchObject({ ok: false, code: 'RESEARCH_SOURCE_INSUFFICIENT', sourceCount: 2 });
+    expect(synthesis.sources.map((source) => source.domain)).toEqual(['one.example', 'three.example']);
   });
 
   it('returns an actionable insufficiency without fabricating synthesis', () => {
@@ -72,7 +87,7 @@ describe('Research three-source synthesis contract', () => {
       code: 'RESEARCH_SOURCE_INSUFFICIENT',
       sourceCount: 1,
       minimumSources: 3,
-      operatorAction: expect.stringMatching(/at least 3 independently crawlable source URLs/i),
+      operatorAction: expect.stringMatching(/public discovery exhausted/i),
     });
     expect(synthesis).not.toHaveProperty('synthesis');
   });
@@ -137,6 +152,20 @@ function happyDeps({ preScoreSequence = [60], postScoreSequence = [72] } = {}) {
       ],
       brokenLinks: [], forms: [], interactiveElements: [], errors: [],
       totalTextLength: 9,
+    })),
+    discoverPublicResearchSources: vi.fn(async () => ({
+      ok: true,
+      kind: 'research.credential_free_public_discovery.v1',
+      query: 'FlowAI orchestration',
+      minimumSources: 3,
+      sourceCount: 3,
+      pages: [
+        { url: 'https://docs-source.example/flowai', title: 'Docs', text: 'FlowAI documentation evidence', statusCode: 200, sourceType: 'credential_free_public_discovery', relevanceScore: 3 },
+        { url: 'https://review-source.example/flowai', title: 'Review', text: 'FlowAI review evidence', statusCode: 200, sourceType: 'credential_free_public_discovery', relevanceScore: 2 },
+        { url: 'https://compare-source.example/flowai', title: 'Comparison', text: 'FlowAI comparison evidence', statusCode: 200, sourceType: 'credential_free_public_discovery', relevanceScore: 2 },
+      ],
+      attempts: [],
+      exhaustionKind: null,
     })),
     produceMonitorText: vi.fn(async ({ url }) => ({
       monitorText: `[L1] 6/10 [L2] 6/10 [L3] 6/10 [L4] 6/10 [L5] 6/10`,
@@ -599,6 +628,11 @@ describe('runOrchestration — AUTO mode', () => {
       expect(result.ok).toBe(true);
       const crawlLog = stepLogs.find((log) => log.result?.kind === 'production_research_crawl_failover.v1');
       expect(crawlLog?.result?.selectedDispatchMemberId).toBe('browserless');
+      expect(deps.discoverPublicResearchSources).toHaveBeenCalledTimes(1);
+      expect(crawlLog?.result?.publicDiscovery).toMatchObject({
+        kind: 'research.credential_free_public_discovery.v1',
+        sourceCount: 3,
+      });
       expect(crawlLog?.result?.attemptHistory).toEqual(expect.arrayContaining([
         expect.objectContaining({
           memberId: 'browserless',

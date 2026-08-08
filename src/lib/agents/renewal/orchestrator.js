@@ -78,6 +78,7 @@ import {
   attachAttemptHistory,
   runRankedToolWithFailover,
 } from '../../forge/rankedToolFailover.js';
+import { discoverPublicResearchSources } from '../../forge/researchRecoveryAdapters.js';
 import { dispatch as orchestraDispatch } from '../../orchestra/index.js';
 import {
   computeCapabilityWeightedScore,
@@ -327,7 +328,8 @@ function hasUsableCrawlOutput(crawlOutput) {
 
 function buildResearchSynthesis(crawlOutput, minimumSources = 3) {
   const pages = Array.isArray(crawlOutput?.pages) ? crawlOutput.pages : [];
-  const seen = new Set();
+  const seenDomains = new Set();
+  const seenContent = new Set();
   const sources = [];
   for (const page of pages) {
     if (typeof page?.url !== 'string' || !/^https?:\/\//i.test(page.url)) continue;
@@ -337,15 +339,26 @@ function buildResearchSynthesis(crawlOutput, minimumSources = 3) {
       parsed.hash = '';
       normalized = parsed.toString();
     } catch { continue; }
-    if (seen.has(normalized)) continue;
-    seen.add(normalized);
+    const hostname = new URL(normalized).hostname.replace(/^www\./, '');
+    const labels = hostname.split('.').filter(Boolean);
+    const suffix2 = labels.slice(-2).join('.');
+    const domain = labels.length > 2 && /^(co|com|org|net|gov|ac)\.[a-z]{2}$/.test(suffix2)
+      ? labels.slice(-3).join('.')
+      : labels.slice(-2).join('.');
+    const sourceText = typeof page.text === 'string' ? page.text : (typeof page.bodyText === 'string' ? page.bodyText : '');
+    const contentFingerprint = sourceText.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().slice(0, 800);
+    if (seenDomains.has(domain) || (contentFingerprint && seenContent.has(contentFingerprint))) continue;
+    seenDomains.add(domain);
+    if (contentFingerprint) seenContent.add(contentFingerprint);
     sources.push(Object.freeze({
       sourceId: `research-source-${sources.length + 1}`,
       url: normalized,
       title: typeof page.title === 'string' ? page.title.slice(0, 160) : null,
       statusCode: Number.isFinite(Number(page.statusCode)) ? Number(page.statusCode) : null,
-      textLength: typeof page.text === 'string' ? page.text.length : 0,
-      sourceType: 'independently_crawled_url',
+      domain,
+      textLength: sourceText.length,
+      sourceType: page.sourceType || 'independently_crawled_url',
+      relevanceScore: Number.isFinite(Number(page.relevanceScore)) ? Number(page.relevanceScore) : null,
     }));
   }
   const valid = sources.filter((source) => source.statusCode === null || (source.statusCode >= 200 && source.statusCode < 400));
@@ -356,7 +369,7 @@ function buildResearchSynthesis(crawlOutput, minimumSources = 3) {
       sourceCount: valid.length,
       minimumSources,
       sources: Object.freeze(valid),
-      operatorAction: `Provide or expose at least ${minimumSources} independently crawlable source URLs, then retry Research.`,
+      operatorAction: `Credential-free public discovery exhausted before finding ${minimumSources} relevant, unique-domain, non-duplicate sources. Review the retained discovery attempts or configure the guided Research provider credential, then retry.`,
     });
   }
   return Object.freeze({
@@ -1185,6 +1198,7 @@ export async function runOrchestration(args = {}) {
   const _checkRunawayDetector   = deps.checkRunawayDetector   || checkRunawayDetector;
   const _aggressiveCrawl          = deps.aggressiveCrawl          || aggressiveCrawl;
   const _conductStructuredCrawl   = deps.conductStructuredCrawl   || conductStructuredCrawl;
+  const _discoverPublicResearchSources = deps.discoverPublicResearchSources || discoverPublicResearchSources;
   const _produceMonitorText     = deps.produceMonitorText     || produceMonitorText;
   const _dispatchTool           = deps.dispatchTool           || deps.dispatch || orchestraDispatch;
   const _computeScore           = deps.computeScore           || computeScore;
@@ -2502,13 +2516,29 @@ export async function runOrchestration(args = {}) {
       });
       crawlOutput = failover.result.data;
       state.crawlOutput = crawlOutput;
-      const researchSynthesis = buildResearchSynthesis(crawlOutput, 3);
+      let researchSynthesis = buildResearchSynthesis(crawlOutput, 3);
+      let publicDiscovery = null;
+      if (!researchSynthesis.ok) {
+        publicDiscovery = await _discoverPublicResearchSources({
+          url: currentUrl,
+          topic: [product?.product_id, product?.name, product?.description].filter(Boolean).join(' '),
+          minimumSources: 3,
+        });
+        crawlOutput = Object.freeze({
+          ...crawlOutput,
+          pages: Object.freeze([...(crawlOutput?.pages ?? []), ...(publicDiscovery.pages ?? [])]),
+          pagesCrawled: (crawlOutput?.pages?.length ?? 0) + (publicDiscovery.pages?.length ?? 0),
+          publicDiscovery,
+        });
+        state.crawlOutput = crawlOutput;
+        researchSynthesis = buildResearchSynthesis(crawlOutput, 3);
+      }
       if (!researchSynthesis.ok) {
         emit(makeStepLog({
           iteration: iterationNumber, step: 3, status: 'failed',
           tool: 'Research multi-source synthesis gate',
           why: 'Research requires at least three independently identified sources before Build',
-          result: researchSynthesis,
+          result: { ...researchSynthesis, publicDiscovery },
           mode: state.mode,
         }));
         return failStep({
@@ -2516,7 +2546,7 @@ export async function runOrchestration(args = {}) {
           failedStep: 'STEP_3',
           error: `${researchSynthesis.code}: ${researchSynthesis.sourceCount}/${researchSynthesis.minimumSources} valid sources`,
           code: researchSynthesis.code,
-          diagnostics: researchSynthesis,
+          diagnostics: { ...researchSynthesis, publicDiscovery },
         });
       }
       state.researchSynthesis = researchSynthesis;
@@ -2559,6 +2589,7 @@ export async function runOrchestration(args = {}) {
           sourceCount: researchSynthesis.sourceCount,
           sourceAttribution: researchSynthesis.sources,
           synthesis: researchSynthesis.synthesis,
+          publicDiscovery,
         },
         durationMs: Date.now() - t0, mode: state.mode,
       });
