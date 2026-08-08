@@ -1031,6 +1031,8 @@ describe('generateFix — diff-mode (D32 T2 default for precise-instruction)', (
     expect(r.diffStats).toBeTruthy();
     expect(r.diffStats.linesAdded).toBe(1);
     expect(r.diffStats.linesRemoved).toBe(1);
+    expect(r.rationale).toMatch(/exact-context validated unified diff/);
+    expect(r.confidence).toBeGreaterThanOrEqual(70);
     // Verify the prompt was the diff prompt, not the full-file prompt.
     const sent = JSON.parse(fetchMock.mock.calls[0][1].body).messages[0].content;
     expect(sent).toMatch(/Return ONLY a unified diff/);

@@ -817,6 +817,11 @@ export async function generateFix(args) {
       { validationReason: validation.reason });
   }
 
+  if (mode === 'diff' && diffStats) {
+    rationale = `Applied ${diffStats.hunks} exact-context validated unified diff hunk(s) to ${args.filePath} for the supplied finding.`;
+    confidence = Math.max(70, Math.min(100, 100 - Math.round((diffStats.changeRatio ?? 0) * 30)));
+  }
+
   return {
     fixedContent,
     model: parsed?.model ?? modelCandidates[0],
