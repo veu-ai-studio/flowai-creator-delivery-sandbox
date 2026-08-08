@@ -104,6 +104,7 @@ export const SMALL_SITE_EFFORT_PROFILE = Object.freeze({
 });
 export const PHASE_B_ENRICHMENT_TIMEOUT_MS = 45_000;
 export const MAX_PHASE_B_ENRICHMENT_TIMEOUT_MS = 60_000;
+export const LLM_LARGE_FILE_DIFF_THRESHOLD_CHARS = 12_000;
 export const FORGE_STEP5_TO_STEP6_TIMEOUTS_MS = Object.freeze({
   monitorText: 45_000,
   computeScore: 45_000,
@@ -115,7 +116,7 @@ export const FORGE_STEP5_TO_STEP6_TIMEOUTS_MS = Object.freeze({
   fetchRepoFileList: 15_000,
   fetchFileContent: 15_000,
   prioritizeIssuesWithClaude: 30_000,
-  generateFix: 30_000,
+  generateFix: 75_000,
   construction: 30_000,
   remediation: 30_000,
   createRenewalBranch: 15_000,
@@ -4214,12 +4215,14 @@ export async function runOrchestration(args = {}) {
                 return { ok: false, error };
               }
             };
-            let attempt = await runGenerateFixAttempt({ mode: 'full' });
+            const initialFixMode = sourceChars > LLM_LARGE_FILE_DIFF_THRESHOLD_CHARS ? 'diff' : 'full';
+            let attempt = await runGenerateFixAttempt({ mode: initialFixMode });
             if (attempt.beforeCall) {
               rejectBeforeCall(attempt.reason, attempt.extra);
               continue;
             }
-            if (!attempt.ok && isPrimaryRootCauseIssue(issue, prioritizedIssues) && isGenerateFixTimeoutError(attempt.error)) {
+            if (!attempt.ok && initialFixMode === 'full'
+              && isPrimaryRootCauseIssue(issue, prioritizedIssues) && isGenerateFixTimeoutError(attempt.error)) {
               recordLlmAttempt({
                 ...baseAttempt,
                 accepted: false,

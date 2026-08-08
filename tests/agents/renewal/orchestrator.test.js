@@ -6,7 +6,7 @@
 // conditions, onStep/onIteration callbacks) without real network calls.
 
 import { describe, it, expect, vi } from 'vitest';
-import { runOrchestration, GTM_READY_SCORE, STEP_NAMES, __internals }
+import { runOrchestration, GTM_READY_SCORE, STEP_NAMES, FORGE_STEP5_TO_STEP6_TIMEOUTS_MS, __internals }
   from '../../../src/lib/agents/renewal/orchestrator.js';
 import { scoreCrawlOutput } from '../../../src/lib/agents/renewal/gtmReadinessScorer.js';
 import { normalizeResearchRecoveryToCrawlerReport } from '../../../src/lib/forge/researchRecoveryAdapters.js';
@@ -3071,6 +3071,42 @@ describe('orchestrator — visible diff-rejection reasons (DISPATCH 33 T1)', () 
 // ── CTO repair-pipeline unblock — primary root-cause retry discipline ───
 
 describe('orchestrator — primary root-cause LLM retry discipline', () => {
+  it('uses bounded diff generation first for a large source file and reaches branch creation', async () => {
+    withVercelEnv();
+    try {
+      const original = `${'// retained large source context\n'.repeat(500)}export const value = 'old';\n`;
+      const fixed = original.replace("export const value = 'old';", "export const value = 'fixed';");
+      const generateFix = vi.fn(async () => ({
+        fixedContent: fixed,
+        model: 'claude-sonnet-5',
+        promptTokens: 100,
+        completionTokens: 40,
+        attempts: 1,
+        mode: 'diff',
+      }));
+      const deps = {
+        ...happyDeps({ preScoreSequence: [50], postScoreSequence: [55] }),
+        generateFix,
+        fetchFileContent: vi.fn(async () => original),
+        parseCheckContent: vi.fn(async () => ({ ok: true })),
+      };
+
+      await runOrchestration({
+        url: null, mode: 'auto', runId: 'large-file-diff-first', supabase: null,
+        environment: 'prd', gtmTarget: 95, maxIterations: 1, deps,
+        issue: {
+          filePath: 'src/large.js', issue: 'Large file has a bounded app-layer defect',
+          fix: 'Change only the defective value.', severity: 'high', title: 'Large source defect', category: 'runtime-error',
+        },
+      });
+
+      expect(generateFix).toHaveBeenCalledTimes(1);
+      expect(generateFix.mock.calls[0][0].opts.mode).toBe('diff');
+      expect(deps.createRenewalBranch).toHaveBeenCalled();
+      expect(FORGE_STEP5_TO_STEP6_TIMEOUTS_MS.generateFix).toBe(75_000);
+    } finally { clearVercelEnv(); }
+  });
+
   it('retries a timed-out primary root-cause file once in diff mode and can reach branch creation', async () => {
     withVercelEnv();
     try {
