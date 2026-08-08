@@ -99,4 +99,32 @@ describe('upgrade target resolver', () => {
       },
     });
   });
+
+  it('allows an explicitly owned same-repo target only on an isolated non-production branch with promotion denied', () => {
+    const repo = 'https://github.com/victor2081new-cloud/flowai';
+    const targets = resolveProductUpgradeTargets({
+      product_id: 'flowai', original_repo: repo, upgrade_repo: repo,
+      repository_owned_and_allowlisted: true,
+      branch_policy: 'isolated_nonproduction',
+      productionPromotionAuthorized: false,
+    });
+    expect(targets).toMatchObject({
+      writesOriginalRepo: true,
+      authorizedIsolatedSameRepo: true,
+      writeSafety: { ok: true, code: null, reason: null },
+    });
+  });
+
+  it.each([
+    ['not allowlisted', { repository_owned_and_allowlisted: false, branch_policy: 'isolated_nonproduction', productionPromotionAuthorized: false }],
+    ['not isolated', { repository_owned_and_allowlisted: true, branch_policy: 'main', productionPromotionAuthorized: false }],
+    ['promotion authorized', { repository_owned_and_allowlisted: true, branch_policy: 'isolated_nonproduction', productionPromotionAuthorized: true }],
+  ])('keeps the same-repo safety block when %s', (_label, flags) => {
+    const repo = 'https://github.com/example/product';
+    const targets = resolveProductUpgradeTargets({ original_repo: repo, upgrade_repo: repo, ...flags });
+    expect(targets).toMatchObject({
+      authorizedIsolatedSameRepo: false,
+      writeSafety: { ok: false, code: 'UPGRADE_TARGET_UNSAFE' },
+    });
+  });
 });

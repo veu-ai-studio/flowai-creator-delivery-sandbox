@@ -129,6 +129,8 @@ const orchestration = runOrchestration({
       github_repo_url: product.repo,
       self_renewal_branch: product.branch,
       vercel_project_id: product.vercel_project_id,
+      repository_owned_and_allowlisted: product.repository_owned_and_allowlisted,
+      branch_policy: product.branch_policy,
       productionPromotionAuthorized: false,
       deployment_environment: 'preview',
     }),

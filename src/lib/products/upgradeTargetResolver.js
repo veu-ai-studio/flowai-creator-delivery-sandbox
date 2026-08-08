@@ -63,11 +63,15 @@ export function resolveProductUpgradeTargets(product = {}) {
     || !!firstNonEmpty(product.original_repo, product.originalRepo, product.original_repo_url)
     || !!explicitUpgradeRepo;
   const writesOriginalRepo = !!originalRepo && !!upgradeRepo && originalRepo === upgradeRepo;
+  const authorizedIsolatedSameRepo = writesOriginalRepo
+    && product.repository_owned_and_allowlisted === true
+    && product.branch_policy === 'isolated_nonproduction'
+    && product.productionPromotionAuthorized === false;
   const writeSafetyCode = !upgradeRepoRequired
     ? null
     : !explicitUpgradeRepo
       ? 'UPGRADE_REPO_REQUIRED'
-      : writesOriginalRepo
+      : writesOriginalRepo && !authorizedIsolatedSameRepo
         ? 'UPGRADE_TARGET_UNSAFE'
         : null;
 
@@ -83,6 +87,7 @@ export function resolveProductUpgradeTargets(product = {}) {
     upgradeRepoExplicit: !!explicitUpgradeRepo,
     upgradeRepoRequired,
     writesOriginalRepo,
+    authorizedIsolatedSameRepo,
     originalReadOnly: true,
     rollbackTarget: originalRepo,
     writeSafety: Object.freeze({
