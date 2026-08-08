@@ -111,6 +111,10 @@ if (renewalEnableError) {
 
 const orchestration = runOrchestration({
   url: product.original_url,
+  input: {
+    url: product.original_url,
+    description: 'Create one evidence-bound preview-only Build artifact that documents the independently attributed three-source Research synthesis and controlled non-production branch provenance. Preserve runtime behavior and do not promote production.',
+  },
   mode: 'auto',
   runId: run.id,
   supabase,
