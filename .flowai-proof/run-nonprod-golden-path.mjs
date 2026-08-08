@@ -195,7 +195,8 @@ const findFirst = (keys) => {
   };
   return visit(result) || visit(logs);
 };
-const branch = findFirst(['branchName', 'branch', 'renewalBranch']);
+const branch = result?.iterations?.find((iteration) => typeof iteration?.branchName === 'string' && iteration.branchName)?.branchName
+  || findFirst(['branchName', 'renewalBranch', 'branch']);
 const commit = findFirst(['commitSha', 'commit', 'sha']);
 const previewUrl = result?.previewUrl || findFirst(['previewUrl', 'deploymentUrl']);
 const artifactUrl = result?.prUrl || findFirst(['prUrl', 'artifactUrl', 'compareUrl']);
