@@ -177,7 +177,15 @@ function chooseDeploymentUrl(deployment, target) {
   return normalizeDeploymentUrl(rawUrl) || aliases[0] || '';
 }
 
-async function createDeployment({ projectId, orgId, owner, repo, branchName, token, target, opts }) {
+function encodeInlineFiles(files) {
+  return files.map((file) => ({
+    file: file.path,
+    data: Buffer.from(file.content, 'utf8').toString('base64'),
+    encoding: 'base64',
+  }));
+}
+
+async function createDeployment({ projectId, orgId, owner, repo, branchName, token, target, files, opts }) {
   const query = orgId ? `?teamId=${encodeURIComponent(orgId)}` : '';
   // NOTE: do NOT send `target: 'preview'` — Vercel /v13/deployments only
   // accepts `target` values of 'production', 'staging', or a custom env
@@ -192,7 +200,9 @@ async function createDeployment({ projectId, orgId, owner, repo, branchName, tok
     body: {
       name: repo,
       project: projectId,
-      gitSource: { type: 'github', org: owner, repo, ref: branchName },
+      ...(Array.isArray(files) && files.length > 0
+        ? { files: encodeInlineFiles(files), projectSettings: { framework: null } }
+        : { gitSource: { type: 'github', org: owner, repo, ref: branchName } }),
       ...(nonEmptyString(target) ? { target: nonEmptyString(target) } : {}),
     },
   });
@@ -296,7 +306,15 @@ export async function deployBranchPreview(args) {
   const opts = { ...(args.opts ?? {}), signal: args.signal ?? args.opts?.signal };
 
   // 1. Create the deployment.
-  const created = await createDeployment({ projectId, orgId, owner, repo, branchName, token, target, opts });
+  const inlineFiles = Array.isArray(args.files) ? args.files : null;
+  if (inlineFiles && (inlineFiles.length === 0 || inlineFiles.some((file) =>
+    typeof file?.path !== 'string' || !file.path || typeof file?.content !== 'string'))) {
+    throw makeError('DEPLOY_FAILED', 'deployBranchPreview: files must contain non-empty path and string content');
+  }
+  if (inlineFiles && target) {
+    throw makeError('DEPLOY_FAILED', 'deployBranchPreview: inline file deployments are preview-only');
+  }
+  const created = await createDeployment({ projectId, orgId, owner, repo, branchName, token, target, files: inlineFiles, opts });
   const deploymentId = created.id;
 
   // 2. If the deployment is already READY synchronously, return immediately.
@@ -371,4 +389,5 @@ export const __internals = Object.freeze({
   normalizeDeploymentUrl,
   deploymentAliases,
   chooseDeploymentUrl,
+  encodeInlineFiles,
 });

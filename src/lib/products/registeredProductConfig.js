@@ -12,6 +12,7 @@ export const REGISTERED_PRODUCT_CONFIG = /** @type {readonly any[]} */ (Object.f
     supabase_project_ref: 'rsulqkfweaxrhuzjhjrs',
     supabase_url: 'https://rsulqkfweaxrhuzjhjrs.supabase.co',
     deployment_environment: 'preview',
+    preview_delivery_mode: 'inline_build_artifact',
     production_promotion_authorized: false,
     productionPromotionAuthorized: false,
     original_url: 'https://flowai.flowaiplatform.com',

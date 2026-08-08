@@ -140,6 +140,34 @@ describe('deployBranchPreview — happy path', () => {
     expect(postBody.target).toBeUndefined();
   });
 
+  it('uploads an inline build artifact to the bound preview project without gitSource', async () => {
+    const fetchMock = sequencedFetch([
+      { status: 200, body: deploymentResponse('READY') },
+    ]);
+    await deployBranchPreview({
+      ...HAPPY_ARGS,
+      files: [{ path: 'index.html', content: '<h1>accepted build</h1>' }],
+      opts: { fetch: fetchMock, sleep: fastSleep },
+    });
+    const postBody = JSON.parse(fetchMock.calls[0].init.body);
+    expect(postBody.project).toBe(HAPPY_ARGS.projectId);
+    expect(postBody.gitSource).toBeUndefined();
+    expect(postBody.target).toBeUndefined();
+    expect(postBody.files).toEqual([{
+      file: 'index.html',
+      data: Buffer.from('<h1>accepted build</h1>').toString('base64'),
+      encoding: 'base64',
+    }]);
+  });
+
+  it('rejects production targeting for inline artifacts', async () => {
+    await expect(deployBranchPreview({
+      ...HAPPY_ARGS,
+      target: 'production',
+      files: [{ path: 'index.html', content: 'safe preview only' }],
+    })).rejects.toMatchObject({ code: 'DEPLOY_FAILED' });
+  });
+
   it('can request production target and returns the stable production alias as previewUrl', async () => {
     const fetchMock = sequencedFetch([
       {

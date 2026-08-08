@@ -133,6 +133,7 @@ const orchestration = runOrchestration({
       branch_policy: product.branch_policy,
       productionPromotionAuthorized: false,
       deployment_environment: 'preview',
+      preview_delivery_mode: product.preview_delivery_mode,
     }),
     runConstruction,
     createOriginPageResolver,

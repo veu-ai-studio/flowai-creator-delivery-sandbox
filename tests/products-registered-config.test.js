@@ -97,6 +97,7 @@ describe('registered product config', () => {
       supabase_project_ref: 'rsulqkfweaxrhuzjhjrs',
       supabase_url: 'https://rsulqkfweaxrhuzjhjrs.supabase.co',
       deployment_environment: 'preview',
+      preview_delivery_mode: 'inline_build_artifact',
       production_promotion_authorized: false,
       productionPromotionAuthorized: false,
       upgrade_url: null,

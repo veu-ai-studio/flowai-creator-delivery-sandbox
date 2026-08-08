@@ -1114,6 +1114,22 @@ class OrchestrationState {
  *   failedStep?: string, error?: string, code?: string,
  * }>}
  */
+function escapePreviewHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function buildInlineBuildPreview({ productId, branchName, fileChanges }) {
+  const sections = fileChanges.map((file) => `
+    <section><h2>${escapePreviewHtml(file.filePath)}</h2><pre>${escapePreviewHtml(file.fileContent)}</pre></section>`).join('');
+  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapePreviewHtml(productId)} Build Preview</title><style>body{font:16px system-ui;max-width:1100px;margin:auto;padding:2rem;color:#172033}header{border-bottom:1px solid #ccd5e0}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f4f7fa;padding:1rem;border-radius:.5rem}section{margin:2rem 0}</style></head><body><header><h1>${escapePreviewHtml(productId)} isolated build preview</h1><p>Controlled branch: <code>${escapePreviewHtml(branchName)}</code></p><p>${fileChanges.length} commit-ready source artifact(s), rendered from the exact accepted Build outputs.</p></header>${sections}</body></html>`;
+  return [{ path: 'index.html', content: html }];
+}
+
 export async function runOrchestration(args = {}) {
   const mode = args.mode ?? 'auto';
   const gtmTarget = Number.isFinite(args.gtmTarget) ? args.gtmTarget : GTM_READY_SCORE;
@@ -5155,9 +5171,15 @@ export async function runOrchestration(args = {}) {
           if (!orgId || !vercelToken) {
             throw new Error('VERCEL_ORG_ID or VERCEL_OPERATOR_TOKEN/VERCEL_TOKEN missing from env');
           }
+          const inlinePreviewFiles = product?.preview_delivery_mode === 'inline_build_artifact'
+            && product?.deployment_environment === 'preview'
+            && product?.productionPromotionAuthorized === false
+            ? buildInlineBuildPreview({ productId, branchName, fileChanges })
+            : null;
           const deployment = await withTimeout(
             _deployBranchPreview({
               projectId, orgId, owner, repo, branchName, token: vercelToken,
+              ...(inlinePreviewFiles ? { files: inlinePreviewFiles } : {}),
               opts: {
                 fetch: makeAbortableFetch({
                   timeoutMs: step5ToStep6Timeouts.deployBranchPreview,
