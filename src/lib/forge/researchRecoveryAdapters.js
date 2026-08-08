@@ -97,7 +97,7 @@ function relevanceScore(candidate, tokens) {
 }
 
 export async function discoverPublicResearchSources({
-  url,
+  url = '',
   topic = '',
   fetchImpl = globalThis.fetch,
   minimumSources = 3,

@@ -166,6 +166,7 @@ export function resolveMemberId(toolOrId) {
   return null;
 }
 
+/** @returns {Readonly<Record<string, string>>} */
 export function credentialStatusesForMember(memberId, env = process.env) {
   const names = CREDENTIAL_REQUIREMENTS[memberId] ?? [];
   if (names.length === 0) return Object.freeze({});

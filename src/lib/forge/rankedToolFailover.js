@@ -132,6 +132,7 @@ export async function runRankedToolWithFailover({
   }
 
   const normalizedCandidates = normalizeCandidateList({ action, candidates, selectedTool, env });
+  /** @type {any[]} */
   const attemptHistory = [];
 
   for (const [index, candidate] of normalizedCandidates.entries()) {
