@@ -15,6 +15,20 @@ import {
   __internals,
 } from '../../../src/lib/agents/renewal/adversarialSurface.js';
 
+const discoverThreeSources = () => ({
+  ok: true,
+  kind: 'research.credential_free_public_discovery.v1',
+  minimumSources: 3,
+  sourceCount: 3,
+  pages: [
+    { url: 'https://docs-source.example/flowai', title: 'Docs', text: 'Independent documentation evidence for FlowAI orchestration.', statusCode: 200, sourceType: 'credential_free_public_discovery', relevanceScore: 3 },
+    { url: 'https://review-source.example/flowai', title: 'Review', text: 'Independent review evidence for FlowAI operations.', statusCode: 200, sourceType: 'credential_free_public_discovery', relevanceScore: 2 },
+    { url: 'https://compare-source.example/flowai', title: 'Comparison', text: 'Independent comparison evidence for FlowAI capabilities.', statusCode: 200, sourceType: 'credential_free_public_discovery', relevanceScore: 2 },
+  ],
+  attempts: [],
+  exhaustionKind: null,
+});
+
 // ── Mock browser surface ──────────────────────────────────────────────
 
 function makeMockBrowser({ gotoThrows = false } = {}) {
@@ -199,6 +213,10 @@ describe('orchestrator STEP 4 — Phase B integration (D39 T1)', () => {
                  agentsNonFunctional: 0, mockOnlyFlagged: 0 },
       probedAt: 'now', durationMs: 100,
     }));
+    const probeAllPages = vi.fn(async ({ urls, opts }) => {
+      const result = await probeAdversarialSurface({ url: urls[0], opts });
+      return { ...result, pagesProbed: urls.length, urlsAttempted: urls.length, perPage: [], findings: result.findings };
+    });
 
     // Use the existing happyDeps stubs but with the explicit
     // probeAdversarialSurface so we see the call site.
@@ -220,6 +238,7 @@ describe('orchestrator STEP 4 — Phase B integration (D39 T1)', () => {
           brokenLinks: [], forms: [], interactiveElements: [],
           errors: [], totalTextLength: 0,
         })),
+        discoverPublicResearchSources: vi.fn(async () => discoverThreeSources()),
         produceMonitorText: vi.fn(async ({ url }) => ({ monitorText: '[L1] 5/10 [L2] 5/10 [L3] 5/10 [L4] 5/10 [L5] 5/10', rawContent: '', url, fetchedAt: 'now', wordCount: 0, pageTitle: '', model: 'c', usage: {} })),
         computeScore: vi.fn(async () => ({ total: 50, l1: 10, l2: 10, l3: 10, l4: 10, l5: 10, label: 'fair' })),
         scoreCrawlOutput: vi.fn(() => ({
@@ -234,6 +253,7 @@ describe('orchestrator STEP 4 — Phase B integration (D39 T1)', () => {
           deepBrowserAnalysis: null, fixProposals: [],
         })),
         probeAdversarialSurface,
+        probeAllPages,
       };
       const result = await runOrchestration({
         url: null, mode: 'auto', runId: 'd39-stub-1', supabase: null,
@@ -258,6 +278,10 @@ describe('orchestrator STEP 4 — Phase B integration (D39 T1)', () => {
   it('Phase B failure degrades cleanly without halting the pipeline', async () => {
     const { runOrchestration } = await import('../../../src/lib/agents/renewal/orchestrator.js');
     const probeAdversarialSurface = vi.fn(async () => { throw new Error('connect_failed'); });
+    const probeAllPages = vi.fn(async ({ urls, opts }) => {
+      const result = await probeAdversarialSurface({ url: urls[0], opts });
+      return { ...result, pagesProbed: urls.length, urlsAttempted: urls.length, perPage: [], findings: result.findings };
+    });
 
     const PRODUCT = Object.freeze({
       product_id: 'mypreglife', org_id: 'veu-ai-studio',
@@ -276,6 +300,7 @@ describe('orchestrator STEP 4 — Phase B integration (D39 T1)', () => {
           pagesCrawled: 1, depth: 1, pages: [], brokenLinks: [], forms: [],
           interactiveElements: [], errors: [], totalTextLength: 0,
         })),
+        discoverPublicResearchSources: vi.fn(async () => discoverThreeSources()),
         produceMonitorText: vi.fn(async () => ({ monitorText: '[L1] 5/10 [L2] 5/10 [L3] 5/10 [L4] 5/10 [L5] 5/10' })),
         computeScore: vi.fn(async () => ({ total: 50, l1: 10, l2: 10, l3: 10, l4: 10, l5: 10, label: 'fair' })),
         scoreCrawlOutput: vi.fn(() => ({ score: 100, counts: { critical: 0, high: 0, medium: 0, low: 0 }, band: 'showcase-ready', label: 'x', penalty: 0, formula: 'x', issues: [] })),
@@ -286,6 +311,7 @@ describe('orchestrator STEP 4 — Phase B integration (D39 T1)', () => {
           deepBrowserAnalysis: null, fixProposals: [],
         })),
         probeAdversarialSurface,
+        probeAllPages,
       };
       const result = await runOrchestration({
         url: null, mode: 'auto', runId: 'd39-stub-2', supabase: null,
@@ -1374,6 +1400,10 @@ describe('probeAllPages — D41 T1 multi-page traversal', () => {
       seenStorageState = opts?.storageState ?? null;
       return { ok: true, url, findings: [], summary: { interactivesTested: 0, deadOrErroring: 0, modalsFailing: 0, formsFailing: 0, agentsNonFunctional: 0, mockOnlyFlagged: 0 }, probedAt: 'now', durationMs: 1 };
     });
+    const probeAllPages = vi.fn(async ({ urls, opts }) => {
+      const result = await probeAdversarialSurface({ url: urls[0], opts });
+      return { ...result, pagesProbed: urls.length, urlsAttempted: urls.length, perPage: [], findings: result.findings };
+    });
 
     const PRODUCT = Object.freeze({
       product_id: 'mypreglife', org_id: 'veu-ai-studio',
@@ -1393,6 +1423,7 @@ describe('probeAllPages — D41 T1 multi-page traversal', () => {
           brokenLinks: [], forms: [], interactiveElements: [],
           errors: [], totalTextLength: 0,
         })),
+        discoverPublicResearchSources: vi.fn(async () => discoverThreeSources()),
         produceMonitorText: vi.fn(async ({ url }) => ({ monitorText: '[L1] 5/10 [L2] 5/10 [L3] 5/10 [L4] 5/10 [L5] 5/10', rawContent: '', url, fetchedAt: 'now', wordCount: 0, pageTitle: '', model: 'c', usage: {} })),
         computeScore: vi.fn(async () => ({ total: 50, l1: 10, l2: 10, l3: 10, l4: 10, l5: 10, label: 'fair' })),
         scoreCrawlOutput: vi.fn(() => ({
@@ -1406,6 +1437,7 @@ describe('probeAllPages — D41 T1 multi-page traversal', () => {
         // capability-weighted gate clears the 7-dimension minimum.
         runEvaluationPipeline: defaultPipelineMock(),
         probeAdversarialSurface,
+        probeAllPages,
         authPreparer,
       };
       const r = await runOrchestration({
@@ -1427,10 +1459,14 @@ describe('probeAllPages — D41 T1 multi-page traversal', () => {
   it('runOrchestration falls back unauthenticated when authPreparer throws (does NOT halt pipeline)', async () => {
     const { runOrchestration } = await import('../../../src/lib/agents/renewal/orchestrator.js');
     let seenStorageState = 'INITIAL';
-    const probeAdversarialSurface = vi.fn(async ({ url, opts }) => {
+      const probeAdversarialSurface = vi.fn(async ({ url, opts }) => {
       seenStorageState = opts?.storageState ?? null;
-      return { ok: true, url, findings: [], summary: { interactivesTested: 0, deadOrErroring: 0, modalsFailing: 0, formsFailing: 0, agentsNonFunctional: 0, mockOnlyFlagged: 0 }, probedAt: 'now', durationMs: 1 };
-    });
+        return { ok: true, url, findings: [], summary: { interactivesTested: 0, deadOrErroring: 0, modalsFailing: 0, formsFailing: 0, agentsNonFunctional: 0, mockOnlyFlagged: 0 }, probedAt: 'now', durationMs: 1 };
+      });
+      const probeAllPages = vi.fn(async ({ urls, opts }) => {
+        const result = await probeAdversarialSurface({ url: urls[0], opts });
+        return { ...result, pagesProbed: urls.length, urlsAttempted: urls.length, perPage: [], findings: result.findings };
+      });
 
     const PRODUCT = Object.freeze({
       product_id: 'mypreglife', org_id: 'veu-ai-studio',
@@ -1455,6 +1491,7 @@ describe('probeAllPages — D41 T1 multi-page traversal', () => {
             brokenLinks: [], forms: [], interactiveElements: [],
             errors: [], totalTextLength: 0,
           })),
+          discoverPublicResearchSources: vi.fn(async () => discoverThreeSources()),
           produceMonitorText: vi.fn(async ({ url }) => ({ monitorText: '[L1] 5/10 [L2] 5/10 [L3] 5/10 [L4] 5/10 [L5] 5/10', rawContent: '', url, fetchedAt: 'now', wordCount: 0, pageTitle: '', model: 'c', usage: {} })),
           computeScore: vi.fn(async () => ({ total: 50, l1: 10, l2: 10, l3: 10, l4: 10, l5: 10, label: 'fair' })),
           scoreCrawlOutput: vi.fn(() => ({
@@ -1468,6 +1505,7 @@ describe('probeAllPages — D41 T1 multi-page traversal', () => {
           // capability-weighted gate clears the 7-dimension minimum.
           runEvaluationPipeline: defaultPipelineMock(),
           probeAdversarialSurface,
+          probeAllPages,
           authPreparer: async () => { throw new Error('login_failed_test'); },
         },
       });
@@ -1562,6 +1600,7 @@ describe('probeAllPages — D41 T1 multi-page traversal', () => {
                     { url: 'https://x/p2', title: 't', headings: [{ tag: 'h1' }], text: 'hi', links: [], forms: [], statusCode: 200, loadTimeMs: 100 }],
             brokenLinks: [], forms: [], interactiveElements: [], errors: [], totalTextLength: 4,
           })),
+          discoverPublicResearchSources: vi.fn(async () => discoverThreeSources()),
           produceMonitorText: vi.fn(async ({ url }) => ({ monitorText: '[L1] 5/10 [L2] 5/10 [L3] 5/10 [L4] 5/10 [L5] 5/10', rawContent: '', url, fetchedAt: 'now', wordCount: 0, pageTitle: '', model: 'c', usage: {} })),
           computeScore: vi.fn(async () => ({ total: 50, l1: 10, l2: 10, l3: 10, l4: 10, l5: 10, label: 'fair' })),
           scoreCrawlOutput,
@@ -1577,8 +1616,8 @@ describe('probeAllPages — D41 T1 multi-page traversal', () => {
       const step5Logs = r.orchestrationLog.filter((l) => l.step === 5);
       const step5 = step5Logs[step5Logs.length - 1];
       // Multi-page Phase B ran on both crawled URLs.
-      expect(step4.result.urlsAttempted).toBe(2);
-      expect(step4.result.pagesProbed).toBe(2);
+      expect(step4.result.urlsAttempted).toBe(5);
+      expect(step4.result.pagesProbed).toBe(5);
       // STEP 5 surfaces the surface-only and comprehensive scores
       // alongside each other so the operator can see the Phase B
       // contribution to the whole-product §7.6 score.
@@ -1587,7 +1626,7 @@ describe('probeAllPages — D41 T1 multi-page traversal', () => {
       expect(step5.result).toHaveProperty('phaseBContribution');
       expect(step5.result.surfaceOnlyGtmScore).toBeGreaterThan(step5.result.gtmScore);
       expect(step5.result.phaseBContribution).toBe(10);          // 2 high findings × 5 points
-      expect(step5.result.phaseBPagesProbed).toBe(2);
+      expect(step5.result.phaseBPagesProbed).toBe(5);
     } finally {
       delete process.env.VERCEL_PROJECT_ID_MYPREGLIFE;
       delete process.env.VERCEL_ORG_ID;
@@ -1975,6 +2014,7 @@ function fullHappyDeps({ scoreSequence } = {}) {
     })),
     checkRateCap: vi.fn(async () => ({ allowed: true, runsInWindow: 0, cap: 1 })),
     checkRunawayDetector: vi.fn(async () => ({ tripped: false })),
+    discoverPublicResearchSources: vi.fn(async () => discoverThreeSources()),
     produceMonitorText: vi.fn(async ({ url }) => ({ monitorText: '[L1] 5/10 [L2] 5/10 [L3] 5/10 [L4] 5/10 [L5] 5/10', rawContent: '', url, fetchedAt: 'now', wordCount: 0, pageTitle: '', model: 'c', usage: {} })),
     computeScore: vi.fn(async () => ({ total: 50, l1: 10, l2: 10, l3: 10, l4: 10, l5: 10, label: 'fair' })),
     generateFix: vi.fn(async () => ({ fixedContent: 'fixed', model: 'c', promptTokens: 1, completionTokens: 1 })),
@@ -2084,7 +2124,7 @@ describe('orchestrator STEP 11 — Phase B re-probe after fix (D42 T1)', () => {
       // Both crawls produced 2 URLs each → probeAllPages was invoked
       // twice: once pre-fix (STEP 4), once post-fix (STEP 11 re-probe).
       expect(probeAllPages).toHaveBeenCalledTimes(2);
-      expect(probeCalls[0].urls).toHaveLength(2);
+      expect(probeCalls[0].urls).toHaveLength(5);
       expect(probeCalls[1].urls).toHaveLength(2);
 
       // STEP 11 emits multiple log entries (evaluator-pipeline progress,
