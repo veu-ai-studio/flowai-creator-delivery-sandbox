@@ -60,6 +60,27 @@ describe('authorized Build model resolution', () => {
     expect(result.model).toBe('claude-sonnet-4-6');
     expect(result.fixedContent).toBe(FIXED_CONTENT);
   });
+
+  it('uses the second authorized model when the primary response fails validation', async () => {
+    const calls = [];
+    const fetch = vi.fn(async (url, init = {}) => {
+      if (url.includes('/v1/models')) return {
+        ok: true, status: 200,
+        json: async () => ({ data: [{ id: 'claude-sonnet-5' }, { id: 'claude-sonnet-4-6' }] }),
+      };
+      const body = JSON.parse(init.body);
+      calls.push(body.model);
+      const text = body.model === 'claude-sonnet-5' ? INPUT_CONTENT : FIXED_CONTENT;
+      return {
+        ok: true, status: 200,
+        json: async () => ({ content: [{ type: 'text', text }], model: body.model, usage: {} }),
+      };
+    });
+    const result = await generateFix({ ...HAPPY_ARGS, opts: { apiKey: API_KEY, fetch, resolveAuthorizedModels: true } });
+    expect(calls).toEqual(['claude-sonnet-5', 'claude-sonnet-4-6']);
+    expect(result.model).toBe('claude-sonnet-4-6');
+    expect(result.fixedContent).toBe(FIXED_CONTENT);
+  });
 });
 const INPUT_CONTENT = 'export default function Home() { return <div>brokenrendered</div>; }\n';
 

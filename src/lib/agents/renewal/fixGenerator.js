@@ -603,10 +603,10 @@ export async function generateFix(args) {
 
   // Attempt up to 2 calls: first with the standard prompt, second with
   // the explicit retry prompt if validation fails on the first.
-  async function callClaude(currentPrompt) {
+  async function callClaude(currentPrompt, startIndex = 0) {
     let response;
-    let usedModel = modelCandidates[0];
-    for (let index = 0; index < modelCandidates.length; index += 1) {
+    let usedModel = modelCandidates[Math.min(startIndex, modelCandidates.length - 1)];
+    for (let index = Math.min(startIndex, modelCandidates.length - 1); index < modelCandidates.length; index += 1) {
       usedModel = modelCandidates[index];
       try {
         response = await fetchImpl(`${ANTHROPIC_API_BASE}/v1/messages`, {
@@ -651,8 +651,8 @@ export async function generateFix(args) {
   // change-ratio). If the diff is empty (no @@ hunks), the prompt
   // contract says the orchestrator should skip the file cleanly →
   // surfaced as FIX_NO_CHANGE.
-  async function diffModeAttempt(currentPrompt) {
-    const c = await callClaude(currentPrompt);
+  async function diffModeAttempt(currentPrompt, startIndex = 0) {
+    const c = await callClaude(currentPrompt, startIndex);
     if (c.stopReason === 'max_tokens') {
       return { ok: false, reason: 'truncated_max_tokens', call: c };
     }
@@ -744,7 +744,7 @@ export async function generateFix(args) {
       // Diff-mode retry: re-ask with the same prompt + an explicit
       // failure-reason addendum so the model knows what to avoid.
       const retryPrompt = `${prompt}\n\nPREVIOUS DIFF REJECTED: ${validation.reason}${validation.detail ? ` (${typeof validation.detail === 'string' ? validation.detail.slice(0, 80) : validation.detail})` : ''}. Return a SMALLER, MORE TARGETED unified diff that does NOT remove or modify any import/export/fetch/route/URL line. If a compliant diff is not possible, return an EMPTY response (no @@ hunks) and the orchestrator will skip cleanly.`;
-      const a2 = await diffModeAttempt(retryPrompt);
+      const a2 = await diffModeAttempt(retryPrompt, modelCandidates.length > 1 ? 1 : 0);
       attempts = 2;
       if (a2.ok) {
         fixedContent = a2.fixedContent;
@@ -777,7 +777,7 @@ export async function generateFix(args) {
       } else {
         retryPrompt = `${prompt}\n\nPREVIOUS ATTEMPT FAILED (${validation.reason}). Return ONLY strict JSON with scoringDimension, rationale, and COMPLETE fixedContent from first line to last. The fixedContent MUST be meaningfully different from the input. Do NOT echo the input unchanged. Do NOT truncate.`;
       }
-      const retryResult = await callClaude(retryPrompt);
+      const retryResult = await callClaude(retryPrompt, modelCandidates.length > 1 ? 1 : 0);
       const retryStructured = parseStructuredFixResponse(retryResult.text);
       fixedContent = retryStructured.fixedContent;
       scoringDimension = retryStructured.scoringDimension;
