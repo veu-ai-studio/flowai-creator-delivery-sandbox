@@ -80,11 +80,29 @@ const registrySelector = (query) => query
 const { data: priorRenewalState, error: renewalStateError } = await registrySelector(
   supabase.from('product_registry').select('self_renewal_enabled,self_renewal_disabled'),
 ).maybeSingle();
-assert(!renewalStateError && priorRenewalState, 'STAGING_RENEWAL_STATE_UNAVAILABLE');
+if (renewalStateError || !priorRenewalState) {
+  await ledger.updateOperationalRun(run.id, owner, ledger.buildActionableStageFailurePatch({
+    stage: 'Golden path staging preflight',
+    tool: 'product_registry renewal-state read',
+    code: 'STAGING_RENEWAL_STATE_UNAVAILABLE',
+    error: 'The exact staging product renewal state could not be read.',
+    executionMayStillBeActive: false,
+  }));
+  throw Object.assign(new Error('STAGING_RENEWAL_STATE_UNAVAILABLE'), { code: 'STAGING_RENEWAL_STATE_UNAVAILABLE' });
+}
 const { error: renewalEnableError } = await registrySelector(
   supabase.from('product_registry').update({ self_renewal_enabled: true, self_renewal_disabled: false }),
 );
-assert(!renewalEnableError, 'STAGING_RENEWAL_ENABLE_FAILED');
+if (renewalEnableError) {
+  await ledger.updateOperationalRun(run.id, owner, ledger.buildActionableStageFailurePatch({
+    stage: 'Golden path staging preflight',
+    tool: 'product_registry staging renewal lease',
+    code: 'STAGING_RENEWAL_ENABLE_FAILED',
+    error: 'The staging service role lacks the required scoped renewal-flag update privilege.',
+    executionMayStillBeActive: false,
+  }));
+  throw Object.assign(new Error('STAGING_RENEWAL_ENABLE_FAILED'), { code: 'STAGING_RENEWAL_ENABLE_FAILED' });
+}
 
 const orchestration = runOrchestration({
   url: product.original_url,
