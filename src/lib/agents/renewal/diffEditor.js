@@ -175,11 +175,11 @@ export function applyDiff(originalText, parsed) {
     }
     // Live model-generated diffs can contain correct, exact context with
     // stale line numbers after source-map or prompt formatting changes.
-    // Search a bounded window, but apply only when there is exactly one
+    // Search the remaining file, but apply only when there is exactly one
     // full-string match. This is relocation, not fuzzy patching.
     if (bestStart < 0 && expectedLines.length > 0) {
-      const windowStart = Math.max(cursor, expectedStart - 200);
-      const windowEnd = Math.min(origLines.length - expectedLines.length, expectedStart + 200);
+      const windowStart = cursor;
+      const windowEnd = origLines.length - expectedLines.length;
       const exactMatches = [];
       for (let tryStart = windowStart; tryStart <= windowEnd; tryStart += 1) {
         let match = true;

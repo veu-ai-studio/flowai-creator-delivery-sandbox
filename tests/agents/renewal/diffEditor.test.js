@@ -185,7 +185,7 @@ describe('applyDiff', () => {
     expect(r.content).toContain('<p>Drifted match.</p>');
   });
 
-  it('relocates one exact hunk context within a bounded 200-line window', () => {
+  it('relocates one exact hunk context anywhere in the remaining file', () => {
     const lines = Array.from({ length: 260 }, (_, index) => `line-${index + 1}`);
     lines[149] = 'unique target line';
     const original = `${lines.join('\n')}\n`;
@@ -198,6 +198,19 @@ describe('applyDiff', () => {
     expect(r.ok).toBe(true);
     expect(r.content).toContain('corrected target line');
     expect(r.content).not.toContain('unique target line');
+  });
+
+  it('relocates unique exact context more than 200 lines from a stale header', () => {
+    const lines = Array.from({ length: 800 }, (_, index) => `line-${index + 1}`);
+    lines[699] = 'far unique target';
+    const diff = parseUnifiedDiff([
+      '@@ -399,1 +399,1 @@',
+      '-far unique target',
+      '+far corrected target',
+    ].join('\n'));
+    const r = applyDiff(`${lines.join('\n')}\n`, diff);
+    expect(r.ok).toBe(true);
+    expect(r.content).toContain('far corrected target');
   });
 
   it('fails closed when relocated hunk context is ambiguous', () => {
