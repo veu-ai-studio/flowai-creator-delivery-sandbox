@@ -431,6 +431,8 @@ export default function FlowAIDashboard() {
   const [isPaused, setIsPaused] = useState(false);
   const [controlApplied, setControlApplied] = useState(null);
   const abortRef = useRef(null);
+  const pendingRunIdRef = useRef(null);
+  const pendingLaunchStoppedRef = useRef(false);
 
   // Durable run state is authoritative after navigation/remount. Rehydrate
   // controls from the authenticated operational ledger instead of relying on
@@ -689,6 +691,8 @@ export default function FlowAIDashboard() {
     const localRunId = `pending_${crypto.randomUUID()}`;
     const idempotencyKey = launchNonce || crypto.randomUUID();
     let trackedRunId = localRunId;
+    pendingRunIdRef.current = localRunId;
+    pendingLaunchStoppedRef.current = false;
     upsertFlowAIRun({
       id: localRunId,
       runId: localRunId,
@@ -705,6 +709,11 @@ export default function FlowAIDashboard() {
     setStartedAt(new Date().toISOString());
     const ac = new AbortController();
     abortRef.current = ac;
+    let launchHandshakeTimedOut = false;
+    const launchHandshakeTimer = window.setTimeout(() => {
+      launchHandshakeTimedOut = true;
+      ac.abort();
+    }, FLOWAI_RUN_HEARTBEAT_TIMEOUT_MS);
 
     let response;
     try {
@@ -737,15 +746,28 @@ export default function FlowAIDashboard() {
         signal: ac.signal,
       });
     } catch (e) {
-      setErrorMsg(`Network error: ${e?.message ?? String(e)}`);
+      const stoppedBeforeStart = pendingLaunchStoppedRef.current;
+      const verdict = stoppedBeforeStart
+        ? 'CANCELLED_BEFORE_START'
+        : launchHandshakeTimedOut
+          ? 'LAUNCH_HANDSHAKE_TIMEOUT'
+          : 'NETWORK_ERROR';
+      const progressLabel = stoppedBeforeStart
+        ? 'Stopped before the server issued a run ID'
+        : launchHandshakeTimedOut
+          ? 'Launch timed out before the first server event'
+          : `Network error: ${e?.message ?? String(e)}`;
+      if (!stoppedBeforeStart) setErrorMsg(progressLabel);
       updateFlowAIRun(trackedRunId, {
-        status: 'failed',
+        status: stoppedBeforeStart ? 'cancelled' : launchHandshakeTimedOut ? 'timed_out' : 'failed',
         endTime: new Date().toISOString(),
-        verdict: 'NETWORK_ERROR',
-        progressLabel: `Network error: ${e?.message ?? String(e)}`,
+        verdict,
+        progressLabel,
       });
       setIsRunning(false);
       return;
+    } finally {
+      window.clearTimeout(launchHandshakeTimer);
     }
 
     if (!response.ok || !response.body) {
@@ -884,6 +906,8 @@ export default function FlowAIDashboard() {
       setIsRunning(false);
       setIsPaused(false);
       abortRef.current = null;
+      pendingRunIdRef.current = null;
+      pendingLaunchStoppedRef.current = false;
     }
   }
 
@@ -917,7 +941,22 @@ export default function FlowAIDashboard() {
   // server stop, aborting the stream client-side would leave the
   // orchestrator running to completion in the background.
   async function stop() {
-    if (!runId) return;
+    if (!runId) {
+      pendingLaunchStoppedRef.current = true;
+      const pendingRunId = pendingRunIdRef.current;
+      if (pendingRunId) {
+        updateFlowAIRun(pendingRunId, {
+          status: 'cancelled',
+          endTime: new Date().toISOString(),
+          verdict: 'CANCELLED_BEFORE_START',
+          progressLabel: 'Stopped before the server issued a run ID',
+        });
+      }
+      if (abortRef.current) abortRef.current.abort();
+      setIsRunning(false);
+      setIsPaused(false);
+      return;
+    }
     const reservation = await sendControl('stop');
     if (!reservation?.ok) return;
     if (runId) {

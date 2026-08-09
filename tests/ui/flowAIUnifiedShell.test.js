@@ -281,6 +281,16 @@ describe('FlowAI unified operating system shell', () => {
     expect(dashboardSrc).not.toContain('useEffect(() => () => { if (abortRef.current) abortRef.current.abort(); }, []);');
   });
 
+  it('terminates a pending launch before the server issues the first SSE event', () => {
+    expect(dashboardSrc).toContain('const pendingRunIdRef = useRef(null)');
+    expect(dashboardSrc).toContain('const pendingLaunchStoppedRef = useRef(false)');
+    expect(dashboardSrc).toContain('LAUNCH_HANDSHAKE_TIMEOUT');
+    expect(dashboardSrc).toContain('CANCELLED_BEFORE_START');
+    expect(dashboardSrc).toContain('Stopped before the server issued a run ID');
+    expect(dashboardSrc).toMatch(/async function stop\(\) \{[\s\S]*if \(!runId\) \{[\s\S]*abortRef\.current\.abort\(\)/);
+    expect(dashboardSrc).not.toContain('async function stop() {\n    if (!runId) return;');
+  });
+
   it('surfaces registered product system notes inside the FlowAI run UI', () => {
     expect(dashboardSrc).toMatch(/findRegisteredProductConfigForUrl/);
     expect(dashboardSrc).toMatch(/registeredProductNote/);
