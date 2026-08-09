@@ -47,8 +47,10 @@ describe('Founder/Operator independent stage runner', () => {
     expect([mocks.research, mocks.design, mocks.build, mocks.audit, mocks.deploy, mocks.renewal, mocks.gtm, mocks.monitor].map(fn => fn.mock.calls.length)).toEqual([1, 1, 1, 1, 1, 1, 1, 1]);
   });
 
-  it('fails closed for missing, malformed, or uncleared prerequisites', async () => {
-    await expect(runIndependentStage({ stage: 'build', productId: 'flowai', tenantId: 't', actorId: 'a', environment: 'staging', prerequisiteArtifacts: [] })).rejects.toMatchObject({ code: 'PREREQUISITE_MISSING' });
+  it('fails every downstream stage closed for missing, malformed, or uncleared prerequisites', async () => {
+    for (const stage of INDEPENDENT_STAGE_ORDER.slice(1)) {
+      await expect(runIndependentStage({ stage, productId: 'flowai', tenantId: 't', actorId: 'a', environment: 'staging', prerequisiteArtifacts: [] })).rejects.toMatchObject({ code: 'PREREQUISITE_MISSING' });
+    }
     await expect(runIndependentStage({ stage: 'build', productId: 'flowai', tenantId: 't', actorId: 'a', environment: 'staging', prerequisiteArtifacts: [{ stage: 'design', id: 'x', fingerprint: 'bad', output: ready.design }] })).rejects.toMatchObject({ code: 'PREREQUISITE_MISSING' });
     await expect(runIndependentStage({ stage: 'build', productId: 'flowai', tenantId: 't', actorId: 'a', environment: 'staging', prerequisiteArtifacts: [{ stage: 'design', id: 'design-1', fingerprint: 'a'.repeat(64), output: { readyForBuild: false } }] })).rejects.toMatchObject({ code: 'PREREQUISITE_NOT_READY' });
     expect(mocks.build).not.toHaveBeenCalled();
