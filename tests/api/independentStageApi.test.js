@@ -47,4 +47,32 @@ describe('POST /api/forge/stage', () => {
     }
     expect(mocks.create).not.toHaveBeenCalled();
   });
+
+  it('returns and persists redacted ranked-provider failure reasons', async () => {
+    mocks.auth.mockResolvedValue({ authenticated: true, authMode: 'clerk', orgId: 'veu-ai-studio', userId: 'founder-1' });
+    const failure = new Error('P2 live execution STOP: analyze exhausted ranked tool candidates');
+    failure.details = {
+      exhaustionKind: 'provider_exhausted',
+      attemptHistory: [
+        { tool: 'Claude Code', memberId: 'claude-code', state: 'failed', reason: 'Anthropic returned 404', result: { rawText: 'must not escape' } },
+        { tool: 'Fallback', memberId: null, state: 'unavailable', reason: 'credential missing' },
+      ],
+    };
+    mocks.run.mockRejectedValue(failure);
+    const res = response();
+    await handler({ method: 'POST', headers: { 'idempotency-key': 'provider-failure-1' }, body: { stage: 'research', productId: 'flowai', environment: 'staging', productionPromotionAuthorized: false } }, res);
+    expect(res.statusCode).toBe(500);
+    expect(res.payload.details).toEqual({
+      exhaustionKind: 'provider_exhausted',
+      attempts: [
+        { tool: 'Claude Code', memberId: 'claude-code', state: 'failed', reason: 'Anthropic returned 404' },
+        { tool: 'Fallback', memberId: null, state: 'unavailable', reason: 'credential missing' },
+      ],
+    });
+    expect(JSON.stringify(res.payload)).not.toContain('must not escape');
+    expect(mocks.update).toHaveBeenLastCalledWith('run-independent', { orgId: 'veu-ai-studio', userId: 'founder-1' }, expect.objectContaining({
+      status: 'failed',
+      error: expect.objectContaining({ details: res.payload.details }),
+    }));
+  });
 });

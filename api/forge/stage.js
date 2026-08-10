@@ -6,6 +6,22 @@ import { createToolIntelligenceService } from '../../src/lib/tools/ToolIntellige
 import { IndependentStageError, runIndependentStage } from '../../src/lib/forge/independentStageRunner.js';
 import { discoverPublicResearchSources } from '../../src/lib/forge/researchRecoveryAdapters.js';
 
+export function safeStageFailureDetails(error) {
+  const attempts = Array.isArray(error?.details?.attemptHistory)
+    ? error.details.attemptHistory
+      .filter(attempt => attempt && typeof attempt === 'object')
+      .map(attempt => ({
+        tool: typeof attempt.tool === 'string' ? attempt.tool : null,
+        memberId: typeof attempt.memberId === 'string' ? attempt.memberId : null,
+        state: typeof attempt.state === 'string' ? attempt.state : null,
+        reason: typeof attempt.reason === 'string' ? attempt.reason.slice(0, 300) : null,
+      }))
+    : [];
+  return attempts.length > 0
+    ? { exhaustionKind: error?.details?.exhaustionKind ?? null, attempts }
+    : null;
+}
+
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Use POST' });
@@ -41,8 +57,9 @@ export default async function handler(req, res) {
     });
     return res.status(200).json({ ok: true, runId: completed.id, requestedStage: body.stage, artifact: result.artifact, clearanceAllowed: false, productionPromotionAuthorized: false });
   } catch (error) {
-    if (accepted?.run) await updateOperationalRun(accepted.run.id, { orgId: auth.orgId, userId: actorId }, { status: 'failed', completedAt: new Date().toISOString(), progressLabel: 'Standalone stage failed', error: { code: error.code || 'INDEPENDENT_STAGE_FAILED', message: error.message, clearanceAllowed: false } }).catch(() => null);
+    const details = safeStageFailureDetails(error);
+    if (accepted?.run) await updateOperationalRun(accepted.run.id, { orgId: auth.orgId, userId: actorId }, { status: 'failed', completedAt: new Date().toISOString(), progressLabel: 'Standalone stage failed', error: { code: error.code || 'INDEPENDENT_STAGE_FAILED', message: error.message, details, clearanceAllowed: false } }).catch(() => null);
     const status = error instanceof IndependentStageError ? 400 : 500;
-    return res.status(status).json({ ok: false, error: error.code || 'INDEPENDENT_STAGE_FAILED', message: error.message, clearanceAllowed: false, productionPromotionAuthorized: false });
+    return res.status(status).json({ ok: false, error: error.code || 'INDEPENDENT_STAGE_FAILED', message: error.message, details, clearanceAllowed: false, productionPromotionAuthorized: false });
   }
 }

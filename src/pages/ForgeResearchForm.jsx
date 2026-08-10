@@ -147,7 +147,16 @@ export default function ForgeResearchForm() {
     });
     const payload = await response.json();
     if (!response.ok || !payload?.ok) {
-      setPersistenceState({ state: 'failed', reason: payload?.message || payload?.error || `HTTP ${response.status}` });
+      const failedAttempts = Array.isArray(payload?.details?.attempts)
+        ? payload.details.attempts
+          .filter(attempt => attempt?.state === 'failed' || attempt?.state === 'timeout' || attempt?.state === 'unavailable')
+          .map(attempt => `${attempt.tool || attempt.memberId || 'provider'}: ${attempt.reason || attempt.state}`)
+          .join(' | ')
+        : '';
+      setPersistenceState({
+        state: 'failed',
+        reason: [payload?.message || payload?.error || `HTTP ${response.status}`, failedAttempts].filter(Boolean).join(' — '),
+      });
       return;
     }
     const output = payload.artifact?.output;
