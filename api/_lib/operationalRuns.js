@@ -46,10 +46,16 @@ async function store() {
   if (kvClient !== undefined) return kvClient;
   if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
     const { kv } = await import('@vercel/kv');
-    kvClient = kv;
-    return kv;
+    kvClient = { kind: 'kv', client: kv };
+    return kvClient;
   }
   if (process.env.NODE_ENV === 'test') return (kvClient = null);
+  const { getSupabase } = await import('./supabase.js');
+  const supabase = getSupabase();
+  if (supabase) {
+    kvClient = { kind: 'supabase', client: supabase };
+    return kvClient;
+  }
   throw Object.assign(new Error('Run store unavailable'), { code: 'RUN_STORE_NOT_LIVE' });
 }
 
@@ -58,6 +64,37 @@ const indexKey = orgId => `operational-runs:${orgId}`;
 const idemKey = (orgId, userId, key) => `operational-idempotency:${orgId}:${userId}:${key}`;
 const decode = value => typeof value === 'string' ? JSON.parse(value) : value;
 const stableId = (orgId, userId, key) => `run_${createHash('sha256').update(`${orgId}:${userId}:${key}`).digest('hex').slice(0, 24)}`;
+
+const OPERATIONAL_STEP_KEY = 'operational_run';
+const OPERATIONAL_PHASE = 'operational.snapshot';
+
+async function getSupabaseRun(client, id) {
+  const { data, error } = await client
+    .from('flowai_audit_log')
+    .select('meta,at')
+    .eq('run_id', id)
+    .eq('step_key', OPERATIONAL_STEP_KEY)
+    .eq('phase', OPERATIONAL_PHASE)
+    .order('at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw Object.assign(new Error(error.message), { code: 'RUN_STORE_READ_FAILED' });
+  return data?.meta?.run || null;
+}
+
+async function appendSupabaseRun(client, run, idempotencyKey = null) {
+  const { error } = await client.from('flowai_audit_log').insert({
+    run_id: run.id,
+    step_key: OPERATIONAL_STEP_KEY,
+    phase: OPERATIONAL_PHASE,
+    at: run.updatedAt || new Date().toISOString(),
+    idempotency_key: idempotencyKey,
+    authority: 'auto_write_internal',
+    meta: { run },
+  });
+  if (error) throw Object.assign(new Error(error.message), { code: 'RUN_STORE_WRITE_FAILED' });
+  return run;
+}
 
 export function publicRunError(code = 'ORCHESTRATION_FAILED') {
   const messages = {
@@ -111,10 +148,16 @@ export async function createOperationalRun({ orgId, userId, idempotency, input =
   const id = stableId(orgId, userId, idempotency.trim());
   const now = new Date().toISOString();
   const run = { id, orgId, userId, version: 1, status: 'queued', mode: input.mode || 'auto', requestedStage: input.requestedStage || null, provenance: input.provenance || null, flowHubPath: input.flowHubPath || null, url: input.url || null, product: input.product || 'FlowAI run', progressLabel: 'Accepted and queued', createdAt: now, updatedAt: now, lastHeartbeatAt: now, completedAt: null, error: null };
-  const kv = await store();
-  if (kv) {
-    const result = await kv.eval(CREATE_LUA, [idemKey(orgId, userId, idempotency.trim()), runKey(id), indexKey(orgId)], ['operational-run:', id, JSON.stringify(run), String(RETENTION_SECONDS), String(Date.now())]);
+  const backend = await store();
+  if (backend?.kind === 'kv') {
+    const result = await backend.client.eval(CREATE_LUA, [idemKey(orgId, userId, idempotency.trim()), runKey(id), indexKey(orgId)], ['operational-run:', id, JSON.stringify(run), String(RETENTION_SECONDS), String(Date.now())]);
     return { run: decode(result[2]), replayed: Number(result[0]) === 0 };
+  }
+  if (backend?.kind === 'supabase') {
+    const existing = await getSupabaseRun(backend.client, id);
+    if (existing) return { run: existing, replayed: true };
+    await appendSupabaseRun(backend.client, run, idempotency.trim());
+    return { run, replayed: false };
   }
   const existing = memory.get(runKey(id));
   if (existing) return { run: existing, replayed: true };
@@ -123,8 +166,12 @@ export async function createOperationalRun({ orgId, userId, idempotency, input =
 }
 
 export async function getOperationalRun(id, owner) {
-  const kv = await store();
-  const run = decode(kv ? await kv.get(runKey(id)) : memory.get(runKey(id)));
+  const backend = await store();
+  const run = decode(backend?.kind === 'kv'
+    ? await backend.client.get(runKey(id))
+    : backend?.kind === 'supabase'
+      ? await getSupabaseRun(backend.client, id)
+      : memory.get(runKey(id)));
   if (!run || run.orgId !== owner.orgId || run.userId !== owner.userId) return null;
   return reconcileStaleCancellation(run, owner);
 }
@@ -183,8 +230,12 @@ function mergeStepResults(currentResults, incomingResults) {
 }
 
 export async function updateOperationalRun(id, owner, patch, options = {}) {
-  const kv = await store();
-  const raw = decode(kv ? await kv.get(runKey(id)) : memory.get(runKey(id)));
+  const backend = await store();
+  const raw = decode(backend?.kind === 'kv'
+    ? await backend.client.get(runKey(id))
+    : backend?.kind === 'supabase'
+      ? await getSupabaseRun(backend.client, id)
+      : memory.get(runKey(id)));
   let current = raw && raw.orgId === owner.orgId && raw.userId === owner.userId ? raw : null;
   if (current && !options.skipReconcile) current = await reconcileStaleCancellation(current, owner);
   if (!current) return null;
@@ -200,9 +251,13 @@ export async function updateOperationalRun(id, owner, patch, options = {}) {
     ? { ...persisted, stepResults: mergeStepResults(current.stepResults, persisted.stepResults) }
     : persisted;
   const next = { ...current, ...durablePatch, version: Number(current.version || 0) + 1, updatedAt: new Date().toISOString() };
-  if (kv) {
-    const result = await kv.eval(UPDATE_LUA, [runKey(id)], [owner.orgId, owner.userId, current.status, String(current.version || 0), JSON.stringify(next), String(RETENTION_SECONDS)]);
+  if (backend?.kind === 'kv') {
+    const result = await backend.client.eval(UPDATE_LUA, [runKey(id)], [owner.orgId, owner.userId, current.status, String(current.version || 0), JSON.stringify(next), String(RETENTION_SECONDS)]);
     if (Number(result[0]) !== 1) return { ...(await getOperationalRun(id, owner)), transitionRejected: true };
+  } else if (backend?.kind === 'supabase') {
+    const latest = await getSupabaseRun(backend.client, id);
+    if (!latest || latest.version !== current.version || latest.status !== current.status) return { ...latest, transitionRejected: true };
+    await appendSupabaseRun(backend.client, next);
   } else {
     const latest = memory.get(runKey(id));
     if (!latest || latest.version !== current.version) return { ...latest, transitionRejected: true };
@@ -212,15 +267,29 @@ export async function updateOperationalRun(id, owner, patch, options = {}) {
 }
 
 export async function listOperationalRuns(owner, limit = 100) {
-  const kv = await store();
+  const backend = await store();
   let rows;
-  if (kv) {
-    const ids = await kv.zrange(indexKey(owner.orgId), 0, limit - 1, { rev: true });
+  if (backend?.kind === 'kv') {
+    const ids = await backend.client.zrange(indexKey(owner.orgId), 0, limit - 1, { rev: true });
     rows = (await Promise.all(ids.map(id => getOperationalRun(String(id), owner)))).filter(Boolean);
+  } else if (backend?.kind === 'supabase') {
+    const { data, error } = await backend.client
+      .from('flowai_audit_log')
+      .select('run_id,meta,at')
+      .eq('step_key', OPERATIONAL_STEP_KEY)
+      .eq('phase', OPERATIONAL_PHASE)
+      .filter('meta->run->>orgId', 'eq', owner.orgId)
+      .filter('meta->run->>userId', 'eq', owner.userId)
+      .order('at', { ascending: false })
+      .limit(Math.max(limit * 20, 200));
+    if (error) throw Object.assign(new Error(error.message), { code: 'RUN_STORE_READ_FAILED' });
+    const latest = new Map();
+    for (const row of data || []) if (!latest.has(row.run_id) && row.meta?.run) latest.set(row.run_id, row.meta.run);
+    rows = [...latest.values()].slice(0, limit);
   } else rows = [...memory.values()].filter(r => r.orgId === owner.orgId && r.userId === owner.userId).slice(0, limit);
   return rows.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
 export function resetOperationalRunsForTests() { memory.clear(); kvClient = undefined; }
-export function setOperationalRunStoreForTests(client) { kvClient = client; }
+export function setOperationalRunStoreForTests(client) { kvClient = client ? { kind: 'kv', client } : client; }
 export const __test = { CREATE_LUA, UPDATE_LUA, TRANSITIONS, HEARTBEAT_TIMEOUT_MS, CONTROL_RESERVATION_TIMEOUT_MS, reconcileStaleCancellation, mergeStepResults };
