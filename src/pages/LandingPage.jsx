@@ -819,7 +819,14 @@ export default function LandingPage() {
         setCrawlerQuality(body.jsRendered ? 'full' : 'basic');
       } else {
         setFetchStatus('warning');
-        setFetchMessage(`Live fetch failed: ${body.reason || body.error || `HTTP ${response.status}`}`);
+        const attemptDetail = Array.isArray(body.attempts)
+          ? body.attempts
+            .map((attempt) => `${attempt?.method || 'crawler'}: ${attempt?.reason || 'unknown failure'}`)
+            .filter(Boolean)
+            .join('; ')
+          : '';
+        const reason = body.reason || body.error || `HTTP ${response.status}`;
+        setFetchMessage(`Live fetch failed: ${reason}${attemptDetail ? ` (${attemptDetail})` : ''}`);
       }
     } catch (error) {
       setFetchStatus('warning');

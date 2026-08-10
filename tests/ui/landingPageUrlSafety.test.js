@@ -18,6 +18,8 @@ describe('LandingPage URL safety and live fetch screen', () => {
     expect(testFetchBlock).toContain("force: 'simple-fetch'");
     expect(testFetchBlock).toContain("setFetchStatus('ok')");
     expect(testFetchBlock).toContain("setFetchStatus('warning')");
+    expect(testFetchBlock).toContain('body.attempts');
+    expect(testFetchBlock).toContain('attempt?.reason');
   });
 
   it('keeps a format-valid public URL launch-enabled while reporting live fetch separately', () => {
