@@ -72,6 +72,17 @@ describe('Clerk session propagation frontend contract', () => {
     expect(authSource).toContain('import { useAuth as useClerkAuth }');
     expect(authSource).toContain('const clerkAuth = useClerkAuth();');
   });
+
+  it('routes Forge Research authentication through the provider-backed token getter', () => {
+    const authSource = readFileSync(resolve(process.cwd(), 'src/lib/AuthContext.jsx'), 'utf8');
+    const researchSource = readFileSync(resolve(process.cwd(), 'src/pages/ForgeResearchForm.jsx'), 'utf8');
+
+    expect(authSource).toContain('const getBearerToken = useCallback(');
+    expect(authSource).toContain('getBearerToken,');
+    expect(researchSource).toContain('const { getBearerToken } = useAuth();');
+    expect(researchSource).toContain('const token = await getBearerToken();');
+    expect(researchSource).not.toContain('window.Clerk?.session?.getToken');
+  });
 });
 
 describe('GET /api/me Clerk bearer path', () => {

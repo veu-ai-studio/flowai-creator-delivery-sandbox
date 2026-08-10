@@ -97,6 +97,11 @@ export const AuthProvider = ({ children, clerkAuth = null }) => {
 
   const checkAppState = useCallback((options) => checkUserAuth(options), [checkUserAuth]);
 
+  const getBearerToken = useCallback(
+    () => resolveClerkBearerToken(clerkAuth),
+    [clerkAuth],
+  );
+
   useEffect(() => {
     const ac = new AbortController();
     checkUserAuth({ signal: ac.signal });
@@ -138,6 +143,7 @@ export const AuthProvider = ({ children, clerkAuth = null }) => {
       navigateToLogin,
       checkUserAuth,
       checkAppState,
+      getBearerToken,
     }}>
       {children}
     </AuthContext.Provider>

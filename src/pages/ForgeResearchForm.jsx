@@ -11,6 +11,7 @@ import { buildResearchTemplate } from '@/lib/forge/researchTemplate';
 import { scoreForgeStep } from '@/lib/forge/forgeStepScorer';
 import { resolveProductContext } from '@/lib/forge/resolveProductContext';
 import { persistenceDisplayText } from '@/lib/forge/persistForgeArtifactClient';
+import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
 
 function blockedPublicUrlReason(value) {
@@ -75,6 +76,7 @@ export function resolveForgeResearchRouteContext({
 }
 
 export default function ForgeResearchForm() {
+  const { getBearerToken } = useAuth();
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const productIdParam = searchParams.get('productId') ?? null;
@@ -117,7 +119,7 @@ export default function ForgeResearchForm() {
     }
     setUrlGuardMessage(null);
     setPersistenceState({ state: 'pending' });
-    const token = await window.Clerk?.session?.getToken?.();
+    const token = await getBearerToken();
     const response = await fetch('/api/forge/stage', {
       method: 'POST',
       credentials: 'include',
