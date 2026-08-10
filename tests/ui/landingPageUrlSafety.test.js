@@ -7,16 +7,20 @@ const testFetchBlock = src.slice(
   src.indexOf('// ── Objective voice')
 );
 
-describe('LandingPage client-side URL safety screen', () => {
-  it('uses a local URL safety screen instead of calling research-url during Test Fetch', () => {
+describe('LandingPage URL safety and live fetch screen', () => {
+  it('runs client URL safety before the authenticated live fetch endpoint', () => {
     expect(src).toContain('export function evaluateClientUrlSafety');
     expect(testFetchBlock).not.toContain("fetch('/api/research-url'");
     expect(testFetchBlock).not.toContain('fetch("/api/research-url"');
     expect(testFetchBlock).not.toContain('sessionStorage.setItem');
-    expect(testFetchBlock).toContain('setFetchStatus(safety.status');
+    expect(testFetchBlock).toContain("fetch('/api/fetch-url'");
+    expect(testFetchBlock).toContain("credentials: 'include'");
+    expect(testFetchBlock).toContain("force: 'simple-fetch'");
+    expect(testFetchBlock).toContain("setFetchStatus('ok')");
+    expect(testFetchBlock).toContain("setFetchStatus('warning')");
   });
 
-  it('keeps public example.com as neutral and launch-enabled with no server contact', () => {
+  it('keeps a format-valid public URL launch-enabled while reporting live fetch separately', () => {
     expect(src).toContain('URL format valid — forge will attempt live crawl and stop if unreachable.');
     expect(src).toContain("return { status: 'valid'");
     expect(src).toContain('launchBlocked: false');
@@ -48,7 +52,7 @@ describe('LandingPage client-side URL safety screen', () => {
   it('auto-starts the run panel after URL launch without widening the API surface', () => {
     expect(src).toContain('<RunConstructionPanel');
     expect(src).toContain('autoStart');
-    expect(src).not.toContain("fetch('/api/fetch-url'");
+    expect(src).toContain("fetch('/api/fetch-url'");
     expect(src).not.toContain('requireAuthHard');
   });
 });

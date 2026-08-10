@@ -360,10 +360,10 @@ function FocusedMigrationSetup({
   );
 }
 
-function CardA({ active, onActivate, url, setUrl, fetchStatus, setFetchStatus, onTestFetch, testing, crawlerQuality }) {
+function CardA({ active, onActivate, url, setUrl, fetchStatus, setFetchStatus, fetchMessage, setFetchMessage, onTestFetch, testing, crawlerQuality }) {
   const liveSafety = evaluateClientUrlSafety(url);
   const shownStatus = liveSafety.launchBlocked ? liveSafety.status : fetchStatus;
-  const shownMessage = liveSafety.launchBlocked ? liveSafety.message : URL_FORMAT_VALID_MESSAGE;
+  const shownMessage = liveSafety.launchBlocked ? liveSafety.message : (fetchMessage || URL_FORMAT_VALID_MESSAGE);
   return (
     <div
       onClick={onActivate}
@@ -381,8 +381,8 @@ function CardA({ active, onActivate, url, setUrl, fetchStatus, setFetchStatus, o
       <div className="flex gap-2 items-center">
         <Input
           value={url}
-          onChange={e => { onActivate(); setUrl(e.target.value); setFetchStatus(null); }}
-          onPaste={e => { e.stopPropagation(); const t = e.clipboardData.getData('text/plain'); e.preventDefault(); onActivate(); setUrl(t); setFetchStatus(null); }}
+          onChange={e => { onActivate(); setUrl(e.target.value); setFetchStatus(null); setFetchMessage(''); }}
+          onPaste={e => { e.stopPropagation(); const t = e.clipboardData.getData('text/plain'); e.preventDefault(); onActivate(); setUrl(t); setFetchStatus(null); setFetchMessage(''); }}
           onClick={e => { e.stopPropagation(); onActivate(); }}
           placeholder="Enter your product URL..."
           className="h-9 text-sm flex-1"
@@ -408,6 +408,18 @@ function CardA({ active, onActivate, url, setUrl, fetchStatus, setFetchStatus, o
           <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
             className="flex items-center gap-2 text-slate-300 text-xs font-semibold">
             <ShieldCheck className="h-3.5 w-3.5" /> {shownMessage}
+          </motion.div>
+        )}
+        {shownStatus === 'ok' && (
+          <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+            className="flex items-center gap-2 text-emerald-400 text-xs font-semibold">
+            <ShieldCheck className="h-3.5 w-3.5" /> {shownMessage}
+          </motion.div>
+        )}
+        {shownStatus === 'warning' && (
+          <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+            className="flex items-center gap-2 text-amber-300 text-xs font-semibold">
+            <XCircle className="h-3.5 w-3.5" /> {shownMessage}
           </motion.div>
         )}
         {shownStatus === 'blocked' && (
@@ -678,7 +690,8 @@ export default function LandingPage() {
 
   // Card A
   const [urlInput, setUrlInput] = useState('');
-  const [fetchStatus, setFetchStatus] = useState(null); // null | 'valid' | 'blocked' | 'invalid'
+  const [fetchStatus, setFetchStatus] = useState(null); // null | 'valid' | 'ok' | 'warning' | 'blocked' | 'invalid'
+  const [fetchMessage, setFetchMessage] = useState('');
   const [crawlerQuality, setCrawlerQuality] = useState(null); // null | 'none' | 'basic' | 'full'
   const [testing, setTesting] = useState(false);
 
@@ -778,16 +791,42 @@ export default function LandingPage() {
   const [runPanelUrl, setRunPanelUrl] = useState(null);
 
   // ── Test Fetch (Card A) ──
-  // Client-side URL safety screen only. It does not call a server endpoint
-  // and does not claim reachability; authenticated crawl paths enforce
-  // server-side URL safety before live execution.
-  const testFetch = () => {
+  // Client safety runs first; the authenticated server then performs the
+  // real bounded fetch using the same crawler safeguards used by FlowAI.
+  const testFetch = async () => {
     if (!urlInput.trim()) return;
-    setTesting(true);
     const safety = evaluateClientUrlSafety(urlInput);
-    setFetchStatus(safety.status === 'empty' ? null : safety.status);
+    if (safety.launchBlocked || safety.status !== 'valid') {
+      setFetchStatus(safety.status === 'empty' ? null : safety.status);
+      setFetchMessage(safety.message);
+      return;
+    }
+    setTesting(true);
+    setFetchStatus(null);
+    setFetchMessage('Testing live reachability…');
     setCrawlerQuality(null);
-    setTesting(false);
+    try {
+      const response = await fetch('/api/fetch-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ url: urlInput.trim(), force: 'simple-fetch' }),
+      });
+      const body = await response.json().catch(() => ({}));
+      if (response.ok && body.ok === true) {
+        setFetchStatus('ok');
+        setFetchMessage(`Live fetch passed${body.title ? `: ${body.title}` : ''}`);
+        setCrawlerQuality(body.jsRendered ? 'full' : 'basic');
+      } else {
+        setFetchStatus('warning');
+        setFetchMessage(`Live fetch failed: ${body.reason || body.error || `HTTP ${response.status}`}`);
+      }
+    } catch (error) {
+      setFetchStatus('warning');
+      setFetchMessage(`Live fetch failed: ${error?.message || 'network error'}`);
+    } finally {
+      setTesting(false);
+    }
   };
 
   // ── Objective voice ──
@@ -1094,6 +1133,8 @@ export default function LandingPage() {
               setUrl={setUrlInput}
               fetchStatus={fetchStatus}
               setFetchStatus={setFetchStatus}
+              fetchMessage={fetchMessage}
+              setFetchMessage={setFetchMessage}
               onTestFetch={testFetch}
               testing={testing}
               crawlerQuality={crawlerQuality}

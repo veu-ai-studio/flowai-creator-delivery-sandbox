@@ -78,20 +78,24 @@ function launchButton(page) {
   });
 }
 
-test('E2E-1: Test Fetch is neutral and non-blocking for public URL format', async ({ page }) => {
-  let researchUrlCalls = 0;
-  await page.route('**/api/research-url', (route) => {
-    researchUrlCalls += 1;
-    return route.abort();
+test('E2E-1: Test Fetch performs a live bounded server fetch for a public URL', async ({ page }) => {
+  let fetchUrlCalls = 0;
+  await page.route('**/api/fetch-url', (route) => {
+    fetchUrlCalls += 1;
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ ok: true, title: 'Example Domain', method: 'simple-fetch', jsRendered: false }),
+    });
   });
 
   await gotoProduction(page);
   await enterUrl(page);
   await page.getByRole('button', { name: /Test Fetch/i }).click();
 
-  await expect(page.getByText('URL format valid — forge will attempt live crawl and stop if unreachable.')).toBeVisible();
+  await expect(page.getByText('Live fetch passed: Example Domain')).toBeVisible();
   await expect(launchButton(page)).toBeEnabled();
-  expect(researchUrlCalls).toBe(0);
+  expect(fetchUrlCalls).toBe(1);
 });
 
 test('E2E-2: Launch starts the pipeline and propagates example.com into research output', async ({ page }) => {
