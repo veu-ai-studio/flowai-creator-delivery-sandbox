@@ -6,6 +6,7 @@ import { dispatch as orchestraDispatch } from '../orchestra/index.js';
 import { MODES } from '../tools/ToolIntelligenceService.js';
 import { invokeForgeStepOwner } from './stepOwnerRecommendations.js';
 import { attachAttemptHistory, runRankedToolWithFailover } from './rankedToolFailover.js';
+import { normalizeResearchRecoveryToCrawlerReport } from './researchRecoveryAdapters.js';
 
 const NO_RESEARCH_TOOL_REASON = 'No AI research tools configured; manual input required for orchestrated sections';
 const P2_MAX_DISPATCHES_PER_RUN = 12;
@@ -343,9 +344,28 @@ export async function runResearch(productId, manualInputs = {}, config = {}) {
   const budget = { dispatchCount: 0, costUsd: 0 };
   const researchUrl = researchUrlFromConfig(config);
   let crawlResult = null;
+  let publicDiscovery = null;
   const failoverEvents = [];
 
-  if (liveDispatch && researchUrl) {
+  if (typeof config.publicResearchDiscovery === 'function' && researchUrl) {
+    publicDiscovery = await config.publicResearchDiscovery({
+      url: researchUrl,
+      topic: [config.productName, config.productDescription, productId].filter(Boolean).join(' '),
+      minimumSources: 3,
+    });
+    if (!publicDiscovery?.ok) {
+      throw new Error(`RESEARCH_SOURCES_INSUFFICIENT: ${publicDiscovery?.sourceCount ?? 0}/3 attributable public sources`);
+    }
+    crawlResult = normalizeResearchRecoveryToCrawlerReport(publicDiscovery, { url: researchUrl }, {
+      member: 'credential-free-public-discovery',
+      evidenceRef: publicDiscovery.kind,
+    });
+    selectedTool = Object.freeze({
+      toolId: 'credential-free-public-discovery',
+      toolName: 'Public web multi-source discovery',
+      selectionReason: `${publicDiscovery.sourceCount} independently attributed public sources retained.`,
+    });
+  } else if (liveDispatch && researchUrl) {
     crawlResult = await runLiveCrawl(researchUrl, budget, dispatchFn, config, toolSelection, failoverEvents);
   }
 
@@ -353,7 +373,7 @@ export async function runResearch(productId, manualInputs = {}, config = {}) {
     if (section.id === 'current-state') {
       populated.push(cloneSection(section, summarizeCurrentState(productId, artifact)));
     } else if (section.id === 'research-tool-selection') {
-      selectedTool = toolSelection?.selection ?? researchToolInput(availableTools);
+      selectedTool = selectedTool ?? toolSelection?.selection ?? researchToolInput(availableTools);
       populated.push(cloneSection(section, selectedTool));
     } else if (section.id === 'crawl-result') {
       populated.push(cloneSection(section, crawlResult));
@@ -365,6 +385,16 @@ export async function runResearch(productId, manualInputs = {}, config = {}) {
       const manualValue = manualInputs?.[section.id];
       if (manualValue !== undefined && manualValue !== null && !(typeof manualValue === 'string' && manualValue.trim() === '')) {
         populated.push(cloneSection(section, manualValue));
+      } else if (publicDiscovery?.ok) {
+        populated.push(cloneSection(section, await runLiveResearchSection(section, {
+          productId,
+          currentState: populated.find(item => item.id === 'current-state')?.input ?? null,
+          crawlResult,
+          targetCustomer: populated.find(item => item.id === 'target-customer')?.input ?? null,
+          selectedTool,
+          toolSelection,
+          publicDiscovery,
+        }, budget, dispatchFn, config, failoverEvents)));
       } else if (shortCircuit) {
         populated.push(cloneSection(section, Object.freeze({
           complete: false,

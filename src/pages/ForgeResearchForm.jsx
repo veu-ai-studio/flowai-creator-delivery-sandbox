@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { BookOpenCheck, FileText, LockKeyhole } from 'lucide-react';
-import { createClient } from '@supabase/supabase-js';
 import { useLocation, useSearchParams } from 'react-router-dom';
 
 import ForgeSectionRenderer, {
@@ -9,11 +8,9 @@ import ForgeSectionRenderer, {
   SectionStatusIcon,
 } from '@/components/forge/ForgeSectionRenderer.jsx';
 import { buildResearchTemplate } from '@/lib/forge/researchTemplate';
-import { runResearch } from '@/lib/forge/researchRunner';
 import { scoreForgeStep } from '@/lib/forge/forgeStepScorer';
 import { resolveProductContext } from '@/lib/forge/resolveProductContext';
-import { persistForgeStepArtifactClient, persistenceDisplayText } from '@/lib/forge/persistForgeArtifactClient';
-import { createToolIntelligenceService } from '@/lib/tools/ToolIntelligenceService';
+import { persistenceDisplayText } from '@/lib/forge/persistForgeArtifactClient';
 import { Button } from '@/components/ui/button';
 
 function blockedPublicUrlReason(value) {
@@ -93,19 +90,6 @@ export default function ForgeResearchForm() {
   const productId = productContext.id;
   const productName = productContext.name;
   const template = useMemo(() => buildResearchTemplate(productContext), [productContext]);
-  const toolService = useMemo(() => {
-    try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL ?? import.meta.env.SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-      if (!supabaseUrl || !supabaseKey) return null;
-      const supabase = createClient(supabaseUrl, supabaseKey);
-      return createToolIntelligenceService({
-        client: supabase,
-      });
-    } catch {
-      return null;
-    }
-  }, []);
   const manualSections = template.sections.filter(section => section.source === 'manual');
   const autoSections = template.sections.filter(section => section.source === 'auto');
   const orchestratedSections = template.sections.filter(section => section.source === 'orchestrated');
@@ -132,39 +116,42 @@ export default function ForgeResearchForm() {
       return;
     }
     setUrlGuardMessage(null);
-    const output = await runResearch(
-      productId,
-      manualInputs,
-      {
-        toolService,
-        toolIntelligenceMode: 'GUIDED',
-        productId,
-        productName,
-        productDescription,
-        url: productUrl,
-        productUrl,
-        productContext,
-        normalizedInput: {
-          url: productUrl,
-          description: productDescription,
-        },
+    setPersistenceState({ state: 'pending' });
+    const token = await window.Clerk?.session?.getToken?.();
+    const response = await fetch('/api/forge/stage', {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'content-type': 'application/json',
+        'idempotency-key': `research-${productId}-${Date.now()}`,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
-    );
+      body: JSON.stringify({
+        stage: 'research',
+        productId,
+        environment: 'staging',
+        productionPromotionAuthorized: false,
+        url: productUrl,
+        manualInputs,
+        productContext,
+        config: {
+          toolIntelligenceMode: 'AUTOMATIC',
+          productId,
+          productName,
+          productDescription,
+          productUrl,
+        },
+      }),
+    });
+    const payload = await response.json();
+    if (!response.ok || !payload?.ok) {
+      setPersistenceState({ state: 'failed', reason: payload?.message || payload?.error || `HTTP ${response.status}` });
+      return;
+    }
+    const output = payload.artifact?.output;
     setResearchOutput(output);
     setScore(scoreForgeStep(output));
-    setPersistenceState({ state: 'pending' });
-    const persisted = await persistForgeStepArtifactClient({
-      productId,
-      runId: /** @type {any} */ (output).runId ?? `research-${Date.now()}`,
-      stepKey: 'research',
-      stepLabel: 'Research Forge',
-      artifact: output,
-      mode: 'GUIDED',
-      runtime: 'offline',
-      evidenceTier: 'B',
-      proofLabel: 'UNIT',
-    });
-    setPersistenceState(persisted);
+    setPersistenceState({ state: 'persisted', runId: payload.runId, artifactId: payload.artifact?.id });
   };
 
   return (

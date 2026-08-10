@@ -4,6 +4,7 @@ import { getSupabase } from '../_lib/supabase.js';
 import { dispatch } from '../../src/lib/orchestra/index.js';
 import { createToolIntelligenceService } from '../../src/lib/tools/ToolIntelligenceService.js';
 import { IndependentStageError, runIndependentStage } from '../../src/lib/forge/independentStageRunner.js';
+import { discoverPublicResearchSources } from '../../src/lib/forge/researchRecoveryAdapters.js';
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
@@ -31,6 +32,7 @@ export default async function handler(req, res) {
     }, {
       dispatch,
       toolService: client ? createToolIntelligenceService({ client }) : undefined,
+      publicResearchDiscovery: discoverPublicResearchSources,
     });
     const completed = await updateOperationalRun(accepted.run.id, { orgId: auth.orgId, userId: actorId }, {
       status: 'completed', completedAt: new Date().toISOString(), progressLabel: `Standalone ${body.stage} completed`,

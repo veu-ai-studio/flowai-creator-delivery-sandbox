@@ -9,20 +9,20 @@ describe('Research Forge URL propagation', () => {
     expect(src).toContain("searchParams.get('description') ?? location.state?.description");
   });
 
-  it('passes URL through the existing researchRunner precedence fields', () => {
+  it('passes URL and product context to the server-side independent stage', () => {
     expect(src).toContain('url: productUrl');
     expect(src).toContain('productUrl');
     expect(src).toContain('productContext');
-    expect(src).toContain('normalizedInput');
+    expect(src).toContain("fetch('/api/forge/stage'");
   });
 
-  it('captures description without hardcoding AUTOMATIC client-side mode', () => {
+  it('captures description and delegates AUTOMATIC execution to the server', () => {
     expect(src).toContain('productDescription');
-    expect(src).toContain("toolIntelligenceMode: 'GUIDED'");
-    expect(src).not.toContain("toolIntelligenceMode: 'AUTOMATIC'");
+    expect(src).toContain("toolIntelligenceMode: 'AUTOMATIC'");
+    expect(src).not.toContain('runResearch(');
   });
 
-  it('blocks unsafe URLs before runResearch', () => {
+  it('blocks unsafe URLs before the server request', () => {
     expect(src).toContain('function blockedPublicUrlReason');
     expect(src).toContain("host === 'localhost'");
     expect(src).toContain('a === 10');

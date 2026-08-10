@@ -86,6 +86,7 @@ function stageConfig(stage, request, prerequisite, deps) {
     productContext: request.productContext,
     toolService: deps.toolService,
     dispatch: deps.dispatch,
+    publicResearchDiscovery: deps.publicResearchDiscovery,
   };
   if (stage === 'research') return { ...common, url: request.url };
   if (stage === 'build') return { ...common, sourceContent: request.sourceContent, targetFilePath: request.targetFilePath || 'src/App.jsx' };

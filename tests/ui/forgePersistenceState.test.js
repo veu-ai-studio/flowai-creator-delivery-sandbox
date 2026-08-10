@@ -5,11 +5,12 @@ const researchSrc = readFileSync('src/pages/ForgeResearchForm.jsx', 'utf8');
 const buildSrc = readFileSync('src/pages/ForgeBuildForm.jsx', 'utf8');
 
 describe('Forge ProductSSOT persistence state UI', () => {
-  it('Research Forge calls the persistence endpoint after runResearch completes', () => {
-    expect(researchSrc).toContain('persistForgeStepArtifactClient');
-    expect(researchSrc).toContain("stepKey: 'research'");
-    expect(researchSrc).toContain("runtime: 'offline'");
-    expect(researchSrc).toContain("evidenceTier: 'B'");
+  it('Research Forge executes and persists through the authenticated independent-stage endpoint', () => {
+    expect(researchSrc).toContain("fetch('/api/forge/stage'");
+    expect(researchSrc).toContain("stage: 'research'");
+    expect(researchSrc).toContain("environment: 'staging'");
+    expect(researchSrc).toContain('productionPromotionAuthorized: false');
+    expect(researchSrc).toContain('payload.artifact?.output');
   });
 
   it('Build Forge calls the persistence endpoint after runBuild completes', () => {

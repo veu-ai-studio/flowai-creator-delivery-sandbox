@@ -17,10 +17,11 @@ describe('browser-facing Supabase credential guard', () => {
     expect(output.trim()).toBe('');
   });
 
-  it('Forge pages use only the public anon key for browser Tool Intelligence clients', () => {
+  it('Forge browser code never uses service-role credentials', () => {
     const research = readFileSync('src/pages/ForgeResearchForm.jsx', 'utf8');
     const build = readFileSync('src/pages/ForgeBuildForm.jsx', 'utf8');
-    expect(research).toContain('import.meta.env.VITE_SUPABASE_ANON_KEY');
+    expect(research).toContain("fetch('/api/forge/stage'");
+    expect(research).not.toContain('SUPABASE_');
     expect(build).toContain('import.meta.env.VITE_SUPABASE_ANON_KEY');
     expect(research).not.toContain('import.meta.env.SUPABASE_SERVICE_ROLE_KEY');
     expect(build).not.toContain('import.meta.env.SUPABASE_SERVICE_ROLE_KEY');

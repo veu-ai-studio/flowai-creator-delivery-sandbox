@@ -350,6 +350,47 @@ describe('SAIGE forge Step 1 research', () => {
     }
   });
 
+  it('server-side public discovery retains three sources and synthesizes all orchestrated sections', async () => {
+    const oldKey = process.env.ANTHROPIC_API_KEY;
+    process.env.ANTHROPIC_API_KEY = 'test-key';
+    const dispatchCalls = [];
+    try {
+      const output = await runResearch('pressai-platform', {}, {
+        matrixArtifact,
+        productName: 'PressAI',
+        productDescription: 'AI press release platform',
+        url: 'https://pressai-platform.vercel.app',
+        runId: 'research-public-discovery-test',
+        publicResearchDiscovery: async () => ({
+          ok: true,
+          kind: 'research.credential_free_public_discovery.v1',
+          sourceCount: 3,
+          pages: [
+            { url: 'https://one.example/a', title: 'One', bodyText: 'One '.repeat(80), statusCode: 200 },
+            { url: 'https://two.example/b', title: 'Two', bodyText: 'Two '.repeat(80), statusCode: 200 },
+            { url: 'https://three.example/c', title: 'Three', bodyText: 'Three '.repeat(80), statusCode: 200 },
+          ],
+        }),
+        dispatch: dispatchReturning(dispatchCalls),
+      });
+
+      expect(output.sections.find(section => section.id === 'crawl-result').input).toMatchObject({
+        ok: true,
+        pagesCrawled: 3,
+        evidenceRecoveryKind: 'external_research_to_crawl_report',
+      });
+      expect(output.sections.find(section => section.id === 'research-tool-selection').input).toMatchObject({
+        toolId: 'credential-free-public-discovery',
+      });
+      expect(dispatchCalls).toHaveLength(5);
+      expect(output.sections.find(section => section.id === 'market-gaps').input).toMatchObject({ complete: true, verified: true });
+      expect(output.readyForDesign).toBe(true);
+    } finally {
+      if (oldKey === undefined) delete process.env.ANTHROPIC_API_KEY;
+      else process.env.ANTHROPIC_API_KEY = oldKey;
+    }
+  });
+
   it('AUTOMATIC research times out a hanging crawl candidate and fails over', async () => {
     const oldAnthropicKey = process.env.ANTHROPIC_API_KEY;
     const oldBrowserlessKey = process.env.BROWSERLESS_API_KEY;
