@@ -1,4 +1,4 @@
-import matrixArtifact from '../orchestratorFramework/matrixArtifact.json';
+import matrixArtifact from '../orchestratorFramework/matrixArtifact.json' with { type: 'json' };
 import { buildResearchTemplate, RESEARCH_STEP_ID } from './researchTemplate.js';
 import { scoreForgeStep } from './forgeStepScorer.js';
 import { selectForgeStepTool } from './toolSelection.js';
