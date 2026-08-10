@@ -1,5 +1,5 @@
 import { MATRIX_LOCK_TTL_MS } from '../config.js';
-import { selectStores } from '../agents/orchestrator/selectStores.ts';
+import { selectStores } from '../agents/orchestrator/selectStores.js';
 import { buildRenewalOutput, GTM_FLAGS } from './renewalOutput.js';
 import { createOrchestratorLogger } from './logger.js';
 
