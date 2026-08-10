@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { BookOpenCheck, FileText, LockKeyhole } from 'lucide-react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 
@@ -11,6 +11,7 @@ import { buildResearchTemplate } from '@/lib/forge/researchTemplate';
 import { scoreForgeStep } from '@/lib/forge/forgeStepScorer';
 import { resolveProductContext } from '@/lib/forge/resolveProductContext';
 import { persistenceDisplayText } from '@/lib/forge/persistForgeArtifactClient';
+import { loadDurableStageArtifacts } from '@/lib/forge/durableStageClient';
 import { useAuth } from '@/lib/AuthContext';
 import { Button } from '@/components/ui/button';
 
@@ -100,6 +101,31 @@ export default function ForgeResearchForm() {
   const [score, setScore] = useState(null);
   const [urlGuardMessage, setUrlGuardMessage] = useState(null);
   const [persistenceState, setPersistenceState] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+    if (!productId) return () => {
+      active = false;
+    };
+    (async () => {
+      try {
+        const artifacts = await loadDurableStageArtifacts({ getBearerToken, productId });
+        if (!active || !artifacts.research?.output) return;
+        setResearchOutput(artifacts.research.output);
+        setScore(scoreForgeStep(artifacts.research.output));
+        setPersistenceState({
+          state: 'persisted',
+          runId: artifacts.research.provenance?.runId ?? null,
+          artifactId: artifacts.research.id,
+        });
+      } catch (error) {
+        if (active) setPersistenceState({ state: 'failed', reason: error.message });
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [getBearerToken, productId]);
 
   const allManualComplete = manualSections.every(section => {
     const value = section.status === 'complete' ? section.input : manualInputs[section.id];

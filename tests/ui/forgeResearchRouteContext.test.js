@@ -13,6 +13,12 @@ vi.mock('@/lib/forge/persistForgeArtifactClient', () => ({
   persistForgeStepArtifactClient: async () => ({ state: 'skipped_auth_required' }),
   persistenceDisplayText: () => 'persisted: skipped_auth_required',
 }));
+vi.mock('@/lib/forge/durableStageClient', () => ({
+  loadDurableStageArtifacts: async () => ({}),
+}));
+vi.mock('@/lib/AuthContext', () => ({
+  useAuth: () => ({ getBearerToken: async () => null }),
+}));
 vi.mock('@/lib/forge/resolveProductContext', () => ({
   resolveProductContext: (input = {}) => ({
     id: 'saigeplatform',

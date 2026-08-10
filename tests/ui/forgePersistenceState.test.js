@@ -11,6 +11,9 @@ describe('Forge ProductSSOT persistence state UI', () => {
     expect(researchSrc).toContain("environment: 'staging'");
     expect(researchSrc).toContain('productionPromotionAuthorized: false');
     expect(researchSrc).toContain('payload.artifact?.output');
+    expect(researchSrc).toContain('loadDurableStageArtifacts');
+    expect(researchSrc).toContain('artifacts.research?.output');
+    expect(researchSrc).toContain('setResearchOutput(artifacts.research.output)');
   });
 
   it('Build Forge calls the persistence endpoint after runBuild completes', () => {
