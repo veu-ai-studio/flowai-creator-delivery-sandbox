@@ -2,7 +2,7 @@ import {
   OrchestratorHub,
   createMemoryColdStore,
   createMemoryHotStore,
-} from '../agents/orchestrator/OrchestratorHub.ts';
+} from '../agents/orchestrator/OrchestratorHub.js';
 
 const FORGE_STEP_OWNERS = Object.freeze({
   research: Object.freeze({ agentId: 6, name: 'Research' }),
