@@ -1,8 +1,38 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { __test, buildActionableStageFailurePatch, createOperationalRun, getOperationalRun, getPendingStopCommand, listOperationalRuns, resetOperationalRunsForTests, updateOperationalRun } from '../api/_lib/operationalRuns.js';
+import { __test, buildActionableStageFailurePatch, createOperationalRun, getOperationalRun, getPendingStopCommand, listOperationalRuns, resetOperationalRunsForTests, setOperationalRunStoreForTests, updateOperationalRun } from '../api/_lib/operationalRuns.js';
 
 const owner = { orgId: 'org_a', userId: 'user_a' };
 beforeEach(() => { process.env.NODE_ENV = 'test'; delete process.env.KV_REST_API_URL; delete process.env.KV_REST_API_TOKEN; resetOperationalRunsForTests(); });
+
+function makeSupabaseRunStore() {
+  const rows = [];
+  const client = {
+    from() {
+      const filters = [];
+      const query = {
+        select() { return query; },
+        eq(field, value) { filters.push([field, value]); return query; },
+        filter(field, _operator, value) { filters.push([field, value]); return query; },
+        order() { return query; },
+        limit(count) {
+          const data = rows.filter((row) => filters.every(([field, value]) => {
+            if (field === 'meta->run->>orgId') return row.meta.run.orgId === value;
+            if (field === 'meta->run->>userId') return row.meta.run.userId === value;
+            return row[field] === value;
+          })).slice().reverse().slice(0, count);
+          return Object.assign(query, { then: (resolve) => resolve({ data, error: null }) });
+        },
+        maybeSingle() {
+          const data = rows.filter((row) => filters.every(([field, value]) => row[field] === value)).at(-1) || null;
+          return Promise.resolve({ data, error: null });
+        },
+        insert(row) { rows.push(structuredClone(row)); return Promise.resolve({ error: null }); },
+      };
+      return query;
+    },
+  };
+  return { client, rows };
+}
 
 describe('operational run ledger', () => {
   it('creates an immediately visible stable id and deduplicates owner replay', async () => {
@@ -99,6 +129,25 @@ describe('operational run ledger', () => {
     expect(terminating.status).toBe('cancelling');
     expect(terminating.stopCommand.dispatchState).toBe('worker_terminating');
     expect(await getPendingStopCommand(run.id, owner)).toBeNull();
+  });
+
+  it('persists replay, updates, and tenant-scoped listing through the Supabase fallback', async () => {
+    const store = makeSupabaseRunStore();
+    setOperationalRunStoreForTests(store.client, 'supabase');
+    const first = await createOperationalRun({ ...owner, idempotency: 'supabase-request1', input: { product: 'PressAI' } });
+    const replay = await createOperationalRun({ ...owner, idempotency: 'supabase-request1', input: { product: 'PressAI' } });
+    expect(replay).toMatchObject({ replayed: true, run: { id: first.run.id } });
+
+    const running = await updateOperationalRun(first.run.id, owner, {
+      status: 'running',
+      stepResults: { research: { status: 'complete', artifactId: 'research-real-1' } },
+      stepCount: 1,
+    });
+    expect(running.version).toBe(2);
+    expect((await getOperationalRun(first.run.id, owner)).stepResults.research.artifactId).toBe('research-real-1');
+    expect(await getOperationalRun(first.run.id, { ...owner, userId: 'other' })).toBeNull();
+    expect(await listOperationalRuns(owner)).toEqual([running]);
+    expect(store.rows).toHaveLength(2);
   });
 
   it('merges every stage artifact durably and retains same-stage history', async () => {

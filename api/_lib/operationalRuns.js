@@ -291,5 +291,5 @@ export async function listOperationalRuns(owner, limit = 100) {
 }
 
 export function resetOperationalRunsForTests() { memory.clear(); kvClient = undefined; }
-export function setOperationalRunStoreForTests(client) { kvClient = client ? { kind: 'kv', client } : client; }
+export function setOperationalRunStoreForTests(client, kind = 'kv') { kvClient = client ? { kind, client } : client; }
 export const __test = { CREATE_LUA, UPDATE_LUA, TRANSITIONS, HEARTBEAT_TIMEOUT_MS, CONTROL_RESERVATION_TIMEOUT_MS, reconcileStaleCancellation, mergeStepResults };
