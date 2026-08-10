@@ -46,6 +46,30 @@ describe('credential-free public Research discovery', () => {
     expect(result.attempts.filter((attempt) => attempt.state === 'accepted')).toHaveLength(3);
   });
 
+  it('continues with an independent search provider when one provider is unavailable', async () => {
+    const feed = `<?xml version="1.0"?><rss><channel>
+      <item><title>FlowAI docs</title><link>https://docs-source.example/flowai</link><description>FlowAI orchestration documentation</description></item>
+      <item><title>FlowAI review</title><link>https://review-source.example/flowai</link><description>FlowAI product review</description></item>
+      <item><title>FlowAI comparison</title><link>https://compare-source.example/flowai</link><description>FlowAI orchestration comparison</description></item>
+    </channel></rss>`;
+    const fetchImpl = vi.fn(async (url) => {
+      if (String(url).includes('duckduckgo.com')) return response('unavailable', { status: 403 });
+      if (String(url).includes('bing.com/search')) return response(feed, { contentType: 'application/rss+xml' });
+      return response(`<html><body>${longText(new URL(url).hostname)}</body></html>`);
+    });
+
+    const result = await discoverPublicResearchSources({
+      url: 'https://flowai.example', topic: 'FlowAI orchestration', fetchImpl,
+    });
+
+    expect(result).toMatchObject({ ok: true, sourceCount: 3 });
+    expect(result.discoveryAttempts).toEqual(expect.arrayContaining([
+      expect.objectContaining({ provider: 'duckduckgo_html', state: 'failed', reason: 'http_403' }),
+      expect.objectContaining({ provider: 'bing_rss', state: 'completed' }),
+    ]));
+    expect(result.pages.every((page) => page.discoveryProvider === 'bing_rss')).toBe(true);
+  });
+
   it('rejects duplicate domains, duplicate content, irrelevant and short sources without fabrication', async () => {
     const duplicate = longText('same');
     const feed = `<?xml version="1.0"?><rss><channel>

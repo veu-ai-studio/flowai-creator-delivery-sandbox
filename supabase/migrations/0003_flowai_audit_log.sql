@@ -67,5 +67,10 @@ create index if not exists idx_flowai_audit_log_idempotency
 -- and a per-tenant audit-trail view is added on top of this table.
 alter table flowai_audit_log enable row level security;
 
+-- New Supabase projects no longer expose newly-created public tables to the
+-- Data API automatically. The server-side run store uses the service role and
+-- needs only append/read access; browser roles intentionally receive nothing.
+grant select, insert on table flowai_audit_log to service_role;
+
 comment on table flowai_audit_log is
   'FlowAI control-plane lineage trail. One row per governance decision by Agent #1 (today) and #2-#20 (future). Server-only, write-via-service_role.';

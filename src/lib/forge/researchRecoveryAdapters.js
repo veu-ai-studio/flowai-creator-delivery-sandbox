@@ -1,6 +1,9 @@
 'use strict';
 
-const PUBLIC_SEARCH_ENDPOINT = 'https://html.duckduckgo.com/html/?q=';
+const PUBLIC_SEARCH_PROVIDERS = Object.freeze([
+  Object.freeze({ name: 'duckduckgo_html', endpoint: 'https://html.duckduckgo.com/html/?q=' }),
+  Object.freeze({ name: 'bing_rss', endpoint: 'https://www.bing.com/search?format=rss&q=' }),
+]);
 const MIN_PUBLIC_SOURCE_TEXT = 160;
 
 function text(value) {
@@ -114,18 +117,37 @@ export async function discoverPublicResearchSources({
     `AI orchestration durable evidence observability operations platform`,
   ];
   const candidateByUrl = new Map();
+  const discoveryAttempts = [];
   for (const query of queries) {
-    const searchUrl = `${PUBLIC_SEARCH_ENDPOINT}${encodeURIComponent(query)}`;
-    const searchResponse = await fetchImpl(searchUrl, {
-      headers: {
-        accept: 'text/html, application/rss+xml;q=0.8, application/xml;q=0.7',
-        'user-agent': 'Mozilla/5.0 (compatible; FlowAIResearch/1.0; +https://flowai.flowaiplatform.com)',
-      },
-      signal: AbortSignal.timeout(15_000),
-    });
-    if (!searchResponse?.ok) throw new Error(`PUBLIC_RESEARCH_DISCOVERY_HTTP_${searchResponse?.status ?? 'unknown'}`);
-    for (const candidate of parsePublicSearchResults(await searchResponse.text())) {
-      if (!candidateByUrl.has(candidate.url)) candidateByUrl.set(candidate.url, { ...candidate, discoveryQuery: query });
+    for (const provider of PUBLIC_SEARCH_PROVIDERS) {
+      const searchUrl = `${provider.endpoint}${encodeURIComponent(query)}`;
+      try {
+        const searchResponse = await fetchImpl(searchUrl, {
+          headers: {
+            accept: 'text/html, application/rss+xml;q=0.8, application/xml;q=0.7',
+            'user-agent': 'Mozilla/5.0 (compatible; FlowAIResearch/1.0; +https://flowai.flowaiplatform.com)',
+          },
+          signal: AbortSignal.timeout(15_000),
+        });
+        if (!searchResponse?.ok) {
+          discoveryAttempts.push({ provider: provider.name, query, state: 'failed', reason: `http_${searchResponse?.status ?? 'unknown'}` });
+          continue;
+        }
+        const results = parsePublicSearchResults(await searchResponse.text());
+        discoveryAttempts.push({ provider: provider.name, query, state: 'completed', resultCount: results.length });
+        for (const candidate of results) {
+          if (!candidateByUrl.has(candidate.url)) {
+            candidateByUrl.set(candidate.url, { ...candidate, discoveryQuery: query, discoveryProvider: provider.name });
+          }
+        }
+      } catch (error) {
+        discoveryAttempts.push({
+          provider: provider.name,
+          query,
+          state: 'failed',
+          reason: error?.name === 'TimeoutError' ? 'timeout' : 'fetch_failed',
+        });
+      }
     }
   }
   const tokens = topicTokens(topic || registeredHost);
@@ -177,6 +199,7 @@ export async function discoverPublicResearchSources({
         statusCode: Number(response.status),
         sourceType: 'credential_free_public_discovery',
         discoveryQuery: candidate.discoveryQuery,
+        discoveryProvider: candidate.discoveryProvider,
         relevanceScore: score,
       }));
       attempts.push({ url: candidate.url, domain, state: 'accepted', relevanceScore: score });
@@ -195,6 +218,7 @@ export async function discoverPublicResearchSources({
     sourceCount: accepted.length,
     pages: Object.freeze(accepted),
     attempts: Object.freeze(attempts),
+    discoveryAttempts: Object.freeze(discoveryAttempts),
     exhaustionKind: accepted.length >= minimumSources ? null : 'internet_source_exhausted',
   });
 }
