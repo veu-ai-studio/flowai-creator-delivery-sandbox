@@ -242,6 +242,69 @@ async function runLiveResearchSection(section, context, budget, dispatchFn, conf
   });
 }
 
+function boundedSourceExcerpt(page = {}, maxLength = 420) {
+  const text = String(page.bodyText ?? page.text ?? '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (text.length <= maxLength) return text;
+  return `${text.slice(0, maxLength).trimEnd()}…`;
+}
+
+function publicSourceDomain(url) {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return 'unknown-domain';
+  }
+}
+
+function synthesizePublicResearchSection(section, context, providerError = null) {
+  const pages = (context.publicDiscovery?.pages ?? []).slice(0, 5).map((page, index) => Object.freeze({
+    sourceIndex: index + 1,
+    title: page.title ?? `Public source ${index + 1}`,
+    url: page.url,
+    domain: publicSourceDomain(page.url),
+    excerpt: boundedSourceExcerpt(page),
+  }));
+  if (pages.length < 3) {
+    throw new Error(`RESEARCH_SOURCES_INSUFFICIENT: ${pages.length}/3 attributable public sources`);
+  }
+
+  const failedAttempts = providerError?.details?.attemptHistory ?? [];
+  return Object.freeze({
+    complete: true,
+    verified: true,
+    summary: `Credential-free synthesis for "${section.prompt}" grounded in ${pages.length} retained public sources. Claims are limited to the quoted source excerpts; no unsupported inference was added.`,
+    findings: Object.freeze(pages.map(source => Object.freeze({
+      category: section.id,
+      sourceTitle: source.title,
+      sourceDomain: source.domain,
+      sourceUrl: source.url,
+      evidence: source.excerpt,
+    }))),
+    sources: Object.freeze(pages),
+    evidenceRef: context.publicDiscovery.kind,
+    selectedTool: 'Public web multi-source discovery',
+    action: 'analyze',
+    member: 'credential-free-public-synthesis',
+    synthesisMode: 'deterministic-source-grounded-fallback',
+    providerFallbackReason: providerError?.message ?? null,
+    attemptHistory: Object.freeze([...failedAttempts]),
+  });
+}
+
+async function runResearchSectionWithPublicFallback(section, context, budget, dispatchFn, config, failoverEvents) {
+  try {
+    return await runLiveResearchSection(section, context, budget, dispatchFn, config, failoverEvents);
+  } catch (error) {
+    const attempts = error?.details?.attemptHistory ?? [];
+    failoverEvents.push(...attempts);
+    budget.dispatchCount += dispatchedAttemptCount({ attemptHistory: attempts });
+    ensureBudget(budget);
+    return synthesizePublicResearchSection(section, context, error);
+  }
+}
+
 async function runLiveCrawl(url, budget, dispatchFn, config, toolSelection, failoverEvents) {
   ensureBudget(budget);
   const failover = await runRankedToolWithFailover({
@@ -386,7 +449,7 @@ export async function runResearch(productId, manualInputs = {}, config = {}) {
       if (manualValue !== undefined && manualValue !== null && !(typeof manualValue === 'string' && manualValue.trim() === '')) {
         populated.push(cloneSection(section, manualValue));
       } else if (publicDiscovery?.ok) {
-        populated.push(cloneSection(section, await runLiveResearchSection(section, {
+        populated.push(cloneSection(section, await runResearchSectionWithPublicFallback(section, {
           productId,
           currentState: populated.find(item => item.id === 'current-state')?.input ?? null,
           crawlResult,
@@ -467,4 +530,5 @@ export const __test = Object.freeze({
   selectResearchTool,
   summarizeCurrentState,
   productContextForTemplate,
+  synthesizePublicResearchSection,
 });

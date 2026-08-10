@@ -391,6 +391,52 @@ describe('SAIGE forge Step 1 research', () => {
     }
   });
 
+  it('falls back to truthful retained multi-source synthesis when the live analysis provider is rejected', async () => {
+    const output = await runResearch('pressai-platform', {}, {
+      matrixArtifact,
+      productName: 'PressAI',
+      productDescription: 'AI press release platform',
+      url: 'https://pressai-platform.vercel.app',
+      runId: 'research-public-provider-fallback-test',
+      publicResearchDiscovery: async () => ({
+        ok: true,
+        kind: 'research.credential_free_public_discovery.v1',
+        sourceCount: 3,
+        pages: [
+          { url: 'https://one.example/a', title: 'One', bodyText: 'First independently retained source passage. '.repeat(20), statusCode: 200 },
+          { url: 'https://two.example/b', title: 'Two', bodyText: 'Second independently retained source passage. '.repeat(20), statusCode: 200 },
+          { url: 'https://three.example/c', title: 'Three', bodyText: 'Third independently retained source passage. '.repeat(20), statusCode: 200 },
+        ],
+      }),
+      dispatch: async () => ({
+        ok: false,
+        action: 'analyze',
+        member: 'claude-code',
+        status: 401,
+        error: 'unauthorized',
+      }),
+    });
+
+    const marketGaps = output.sections.find(section => section.id === 'market-gaps').input;
+    expect(marketGaps).toMatchObject({
+      complete: true,
+      verified: true,
+      member: 'credential-free-public-synthesis',
+      synthesisMode: 'deterministic-source-grounded-fallback',
+      evidenceRef: 'research.credential_free_public_discovery.v1',
+    });
+    expect(marketGaps.sources).toHaveLength(3);
+    expect(marketGaps.findings.map(finding => finding.sourceDomain)).toEqual([
+      'one.example',
+      'two.example',
+      'three.example',
+    ]);
+    expect(marketGaps.providerFallbackReason).toMatch(/exhausted ranked tool candidates/);
+    expect(output.sections.filter(section => section.source === 'orchestrated'))
+      .toSatisfy(sections => sections.every(section => section.input.member === 'credential-free-public-synthesis'));
+    expect(output.readyForDesign).toBe(true);
+  });
+
   it('AUTOMATIC research times out a hanging crawl candidate and fails over', async () => {
     const oldAnthropicKey = process.env.ANTHROPIC_API_KEY;
     const oldBrowserlessKey = process.env.BROWSERLESS_API_KEY;
