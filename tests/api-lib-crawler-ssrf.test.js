@@ -3,9 +3,17 @@ import { describe, expect, it } from 'vitest';
 import {
   assertPublicHttpUrl,
   createSsrGuardedLookup,
+  selectPinnedPublicAddress,
 } from '../api/_lib/crawler.js';
 
 describe('api/_lib/crawler SSRF guard', () => {
+  it('prefers public IPv4 when DNS returns IPv6 first', () => {
+    expect(selectPinnedPublicAddress([
+      { address: '2606:2800:220:1:248:1893:25c8:1946', family: 6 },
+      { address: '93.184.216.34', family: 4 },
+    ])).toBe('93.184.216.34');
+  });
+
   it('blocks localhost before crawl dispatch', async () => {
     const verdict = await assertPublicHttpUrl('http://localhost:3000');
     expect(verdict.ok).toBe(false);

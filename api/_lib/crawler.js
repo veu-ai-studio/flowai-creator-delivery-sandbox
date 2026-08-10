@@ -49,6 +49,12 @@ function isBlockedIp(address) {
   return true;
 }
 
+export function selectPinnedPublicAddress(addresses = []) {
+  return addresses.find((entry) => entry?.family === 4)?.address
+    ?? addresses[0]?.address
+    ?? null;
+}
+
 /** @param {any} input */
 export function createSsrGuardedLookup({ hostname, pinnedAddress = null, resolver = dns.lookup } = {}) {
   return async (_hostname, opts, callback) => {
@@ -124,7 +130,12 @@ export async function assertPublicHttpUrl(inputUrl) {
     url: parsed.toString(),
     hostname: parsed.hostname,
     addresses: addresses.map((entry) => entry.address),
-    pinnedAddress: addresses[0]?.address ?? null,
+    // Vercel's serverless runtime can resolve an IPv6 address even when the
+    // execution environment has no usable IPv6 route. Prefer a verified
+    // public IPv4 address when one exists, while retaining IPv6 as the
+    // fallback for IPv6-only hosts. The selected address is still pinned by
+    // createSsrGuardedLookup, so the SSRF/rebinding protection is preserved.
+    pinnedAddress: selectPinnedPublicAddress(addresses),
   };
 }
 
