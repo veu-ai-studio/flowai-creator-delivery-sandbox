@@ -90,6 +90,23 @@ describe('api/_lib/crawler SSRF guard', () => {
     });
   });
 
+  it('returns the address-array callback shape requested by current Node HTTPS clients', async () => {
+    const lookup = createSsrGuardedLookup({
+      hostname: 'public.example',
+      pinnedAddress: '93.184.216.34',
+    });
+    await new Promise((resolve, reject) => {
+      lookup('public.example', { all: true }, (error, addresses) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+        expect(addresses).toEqual([{ address: '93.184.216.34', family: 4 }]);
+        resolve();
+      });
+    });
+  });
+
   it('blocks transport retry DNS when any resolved address is private', async () => {
     const lookup = createSsrGuardedLookup({
       hostname: 'private.example',

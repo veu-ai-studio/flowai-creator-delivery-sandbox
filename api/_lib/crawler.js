@@ -74,7 +74,12 @@ export function createSsrGuardedLookup({ hostname, pinnedAddress = null, resolve
         callback(error);
         return;
       }
-      callback(null, selected.address, selected.family || net.isIP(selected.address));
+      const family = selected.family || net.isIP(selected.address);
+      if (opts?.all === true) {
+        callback(null, [{ address: selected.address, family }]);
+        return;
+      }
+      callback(null, selected.address, family);
     } catch (error) {
       callback(error);
     }
