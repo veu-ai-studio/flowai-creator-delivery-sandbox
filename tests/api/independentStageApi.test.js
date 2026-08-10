@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({ auth: vi.fn(), create: vi.fn(), update: vi.fn(), run: vi.fn() }));
-vi.mock('../../api/_lib/auth.js', () => ({ requireOperatorAuth: mocks.auth }));
+vi.mock('../../api/_lib/auth.js', () => ({ requireAuthHard: mocks.auth }));
 vi.mock('../../api/_lib/operationalRuns.js', () => ({ createOperationalRun: mocks.create, updateOperationalRun: mocks.update }));
 vi.mock('../../api/_lib/supabase.js', () => ({ getSupabase: () => null }));
 vi.mock('../../src/lib/orchestra/index.js', () => ({ dispatch: vi.fn() }));
@@ -20,7 +20,7 @@ describe('POST /api/forge/stage', () => {
     mocks.run.mockResolvedValue({ artifact: { id: 'artifact-1', fingerprint: 'a'.repeat(64), provenance: {} } });
   });
 
-  it('denies ordinary authenticated users without platform Founder/Operator authority', async () => {
+  it('denies requests without verified tenant membership', async () => {
     mocks.auth.mockImplementation(async (_req, res) => { res.status(401).json({ error: 'Authentication required' }); return null; });
     const res = response();
     await handler({ method: 'POST', headers: {}, body: {} }, res);
@@ -28,7 +28,7 @@ describe('POST /api/forge/stage', () => {
     expect(mocks.run).not.toHaveBeenCalled();
   });
 
-  it('persists requested stage, provenance, artifact, and clearance-first boundaries for an operator', async () => {
+  it('persists requested stage, provenance, artifact, and clearance-first boundaries for an authenticated tenant member', async () => {
     mocks.auth.mockResolvedValue({ authenticated: true, authMode: 'clerk', orgId: 'veu-ai-studio', userId: 'founder-1' });
     const res = response();
     await handler({ method: 'POST', headers: { 'idempotency-key': 'independent-research-1' }, body: { stage: 'research', productId: 'flowai', environment: 'staging', productionPromotionAuthorized: false } }, res);

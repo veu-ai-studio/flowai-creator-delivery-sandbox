@@ -1,4 +1,4 @@
-import { requireOperatorAuth } from '../_lib/auth.js';
+import { requireAuthHard } from '../_lib/auth.js';
 import { createOperationalRun, updateOperationalRun } from '../_lib/operationalRuns.js';
 import { getSupabase } from '../_lib/supabase.js';
 import { dispatch } from '../../src/lib/orchestra/index.js';
@@ -9,7 +9,7 @@ import { discoverPublicResearchSources } from '../../src/lib/forge/researchRecov
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Use POST' });
-  const auth = await requireOperatorAuth(req, res);
+  const auth = await requireAuthHard(req, res);
   if (!auth) return;
   const body = req.body || {};
   if (body.environment !== 'staging' || body.productionPromotionAuthorized === true) {
